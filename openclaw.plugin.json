@@ -1,0 +1,123 @@
+{
+  "id": "openclaw-kitchen-sink",
+  "name": "OpenClaw Kitchen Sink",
+  "version": "0.1.0",
+  "description": "Generated kitchen-sink fixture for OpenClaw plugin API surface 2026.4.24.",
+  "enabledByDefault": false,
+  "kind": [
+    "tool",
+    "hook",
+    "channel",
+    "provider"
+  ],
+  "channels": [
+    "kitchen-sink-channel"
+  ],
+  "providers": [
+    "kitchen-sink-provider"
+  ],
+  "cliBackends": [
+    "kitchen-sink-cli-backend"
+  ],
+  "commandAliases": [
+    {
+      "command": "kitchen-sink",
+      "pluginId": "openclaw-kitchen-sink"
+    }
+  ],
+  "activation": {
+    "onProviders": [
+      "kitchen-sink-provider"
+    ],
+    "onChannels": [
+      "kitchen-sink-channel"
+    ],
+    "onCommands": [
+      "kitchen-sink"
+    ],
+    "onCapabilities": [
+      "provider",
+      "channel",
+      "tool",
+      "hook"
+    ]
+  },
+  "setup": {
+    "providers": [
+      {
+        "id": "kitchen-sink-provider",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
+      }
+    ],
+    "cliBackends": [
+      "kitchen-sink-cli-backend"
+    ],
+    "configMigrations": [
+      "kitchen-sink-config-migration"
+    ],
+    "requiresRuntime": false
+  },
+  "contracts": {
+    "agentToolResultMiddleware": [
+      "kitchen-sink-agent-tool-result-middleware"
+    ],
+    "documentExtractors": [
+      "kitchen-sink-document-extractors"
+    ],
+    "embeddedExtensionFactories": [
+      "kitchen-sink-embedded-extension-factories"
+    ],
+    "externalAuthProviders": [
+      "kitchen-sink-external-auth-providers"
+    ],
+    "imageGenerationProviders": [
+      "kitchen-sink-image-generation-providers"
+    ],
+    "mediaUnderstandingProviders": [
+      "kitchen-sink-media-understanding-providers"
+    ],
+    "memoryEmbeddingProviders": [
+      "kitchen-sink-memory-embedding-providers"
+    ],
+    "musicGenerationProviders": [
+      "kitchen-sink-music-generation-providers"
+    ],
+    "realtimeTranscriptionProviders": [
+      "kitchen-sink-realtime-transcription-providers"
+    ],
+    "realtimeVoiceProviders": [
+      "kitchen-sink-realtime-voice-providers"
+    ],
+    "speechProviders": [
+      "kitchen-sink-speech-providers"
+    ],
+    "tools": [
+      "kitchen-sink-tools"
+    ],
+    "videoGenerationProviders": [
+      "kitchen-sink-video-generation-providers"
+    ],
+    "webContentExtractors": [
+      "kitchen-sink-web-content-extractors"
+    ],
+    "webFetchProviders": [
+      "kitchen-sink-web-fetch-providers"
+    ],
+    "webSearchProviders": [
+      "kitchen-sink-web-search-providers"
+    ]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean",
+        "default": false
+      }
+    }
+  }
+}

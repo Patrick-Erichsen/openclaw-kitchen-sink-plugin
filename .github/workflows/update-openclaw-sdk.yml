@@ -1,0 +1,44 @@
+name: Update OpenClaw SDK Surface
+
+on:
+  schedule:
+    - cron: "17 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install openclaw@latest --save-exact --package-lock
+      - run: npm run sync:surface
+      - run: npm test
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet package.json package-lock.json openclaw.plugin.json src/generated-hooks.js src/generated-registrars.js src/generated-sdk-imports.ts; then
+            echo "OpenClaw SDK surface is already current."
+            exit 0
+          fi
+          version="$(node -p "require('./node_modules/openclaw/package.json').version")"
+          branch="automation/openclaw-sdk-${version}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add package.json package-lock.json openclaw.plugin.json src/generated-hooks.js src/generated-registrars.js src/generated-sdk-imports.ts
+          git commit -m "Update OpenClaw SDK surface to ${version}"
+          git push --force-with-lease origin "$branch"
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "Update OpenClaw SDK surface to ${version}" \
+            --body "Automated update of the pinned OpenClaw SDK package and generated kitchen-sink API surface."

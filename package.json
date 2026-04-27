@@ -1,0 +1,45 @@
+{
+  "name": "openclaw-kitchen-sink-plugin",
+  "version": "0.1.0",
+  "private": false,
+  "description": "Credential-free kitchen-sink OpenClaw plugin fixture covering the public plugin API surface.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Patrick-Erichsen/openclaw-kitchen-sink-plugin.git"
+  },
+  "files": [
+    "src/",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "exports": {
+    ".": "./src/index.js",
+    "./runtime": "./src/index.js",
+    "./setup": "./src/setup.js"
+  },
+  "openclaw": {
+    "extensions": [
+      "./src/index.js"
+    ],
+    "runtimeExtensions": [
+      "./src/index.js"
+    ],
+    "setupEntry": "./src/setup.js",
+    "compat": {
+      "pluginApi": "2026.4"
+    }
+  },
+  "scripts": {
+    "check": "npm run sync:surface -- --check && node scripts/check-sdk-surface.mjs",
+    "sync:surface": "node scripts/sync-surface.mjs",
+    "test": "npm run check"
+  },
+  "dependencies": {
+    "openclaw": "2026.4.24"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
