@@ -32,12 +32,17 @@
     }
   },
   "scripts": {
-    "check": "npm run sync:surface -- --check && node scripts/check-sdk-surface.mjs",
+    "check": "npm run sync:surface -- --check && node scripts/check-sdk-surface.mjs && npm run plugin:inspect",
+    "plugin:inspect": "plugin-inspector check --config plugin-inspector.config.json --no-openclaw",
+    "plugin:inspect:runtime": "PLUGIN_INSPECTOR_EXECUTE_ISOLATED=1 plugin-inspector check --config plugin-inspector.config.json --no-openclaw --runtime --mock-sdk",
     "sync:surface": "node scripts/sync-surface.mjs",
     "test": "npm run check"
   },
   "dependencies": {
     "openclaw": "2026.4.24"
+  },
+  "devDependencies": {
+    "@openclaw/plugin-inspector": "0.1.2"
   },
   "engines": {
     "node": ">=22"

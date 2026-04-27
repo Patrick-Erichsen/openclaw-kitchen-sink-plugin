@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "plugin": {
+    "id": "openclaw-kitchen-sink",
+    "priority": "high",
+    "seams": [
+      "dynamic-tool",
+      "llm-observer",
+      "gateway-service",
+      "provider-capability",
+      "manifest-contract",
+      "sdk-surface"
+    ],
+    "sourceRoot": "src",
+    "expect": {
+      "hooks": [
+        "before_prompt_build",
+        "before_tool_call",
+        "llm_input",
+        "llm_output",
+        "agent_end",
+        "gateway_start",
+        "gateway_stop"
+      ],
+      "registrations": [
+        "registerTool",
+        "registerChannel",
+        "registerService",
+        "registerHttpRoute",
+        "registerSpeechProvider"
+      ],
+      "manifestContracts": [
+        "tools",
+        "speechProviders"
+      ]
+    }
+  },
+  "capture": {
+    "mockSdk": true
+  }
+}
