@@ -42,7 +42,7 @@
     ],
     "setupEntry": "./src/setup.js",
     "compat": {
-      "pluginApi": "2026.4"
+      "pluginApi": ">=2026.4.26"
     },
     "build": {
       "openclawVersion": "2026.4.26",
