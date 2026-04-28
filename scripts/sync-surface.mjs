@@ -37,18 +37,14 @@ console.log(
 );
 
 function renderHooks({ hooks, packageVersion }) {
-  return `${header(packageVersion)}
+  return `${header(packageVersion)}import { observeKitchenHook } from "./scenarios.js";
+
 export function registerAllHooks(api) {
 ${hooks.map((hook) => `  api.on(${JSON.stringify(hook)}, kitchenSinkHook(${JSON.stringify(hook)}));`).join("\n")}
 }
 
 function kitchenSinkHook(name) {
-  return async (event, context) => ({
-    kitchenSink: true,
-    hook: name,
-    observedEventKeys: Object.keys(event ?? {}),
-    observedContextKeys: Object.keys(context ?? {}),
-  });
+  return async (event, context) => observeKitchenHook(name, event, context);
 }
 `;
 }

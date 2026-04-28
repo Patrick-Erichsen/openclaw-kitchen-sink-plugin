@@ -339,6 +339,27 @@ export function extractInteractiveText(ctx) {
   return "";
 }
 
+export function observeKitchenHook(name, event, context) {
+  const toolId = firstHookString(event, ["toolId", "toolName", "name", "id"]) ||
+    firstHookString(event?.tool, ["id", "name"]);
+  const providerId = firstHookString(event, ["providerId", "provider", "selectedProvider"]) ||
+    firstHookString(context, ["providerId", "provider", "selectedProvider"]);
+  const url = firstHookString(event, ["url"]) || firstHookString(event?.args, ["url"]);
+  const text = extractHookText(event) || extractHookText(context);
+  const scenarioId = inferKitchenScenario({ providerId, text, toolId, url });
+
+  return {
+    kitchenSink: true,
+    pluginId: PLUGIN_ID,
+    hook: name,
+    route: `hook:${name}`,
+    matchedKitchen: scenarioId !== "observe",
+    scenarioId,
+    observedEventKeys: Object.keys(event ?? {}),
+    observedContextKeys: Object.keys(context ?? {}),
+  };
+}
+
 function createKitchenJob(kind, prompt, date, delayMs, scenarioId, route) {
   const id = `ks_${kind}_${stableHash(`${kind}:${prompt}`).slice(0, 10)}`;
   return {
@@ -478,6 +499,58 @@ function readString(input, key) {
   }
   if (typeof input === "string" && key === "prompt") {
     return input;
+  }
+  return "";
+}
+
+function inferKitchenScenario({ providerId, text, toolId, url }) {
+  const haystack = [providerId, text, toolId, url].filter(Boolean).join(" ").toLowerCase();
+  if (toolId === "kitchen_sink_image_job" || providerId === IMAGE_PROVIDER_ID) {
+    return "image.generate";
+  }
+  if (toolId === "kitchen_sink_search" || providerId === WEB_SEARCH_PROVIDER_ID) {
+    return "web.search";
+  }
+  if (providerId === WEB_FETCH_PROVIDER_ID || url) {
+    return "web.fetch";
+  }
+  if (providerId === MEDIA_PROVIDER_ID) {
+    return "image.describe";
+  }
+  if (toolId === "kitchen_sink_text" || providerId === TEXT_PROVIDER_ID) {
+    return "text.reply";
+  }
+  if (/\bkitchen\b/.test(haystack) && /\b(image|picture|draw|generate)\b/.test(haystack)) {
+    return "image.generate";
+  }
+  if (/\bkitchen\b/.test(haystack) && /\b(search|find|lookup|web)\b/.test(haystack)) {
+    return "web.search";
+  }
+  if (/\bkitchen\b/.test(haystack)) {
+    return "text.reply";
+  }
+  return "observe";
+}
+
+function extractHookText(value) {
+  if (!value || typeof value !== "object") {
+    return typeof value === "string" ? value : "";
+  }
+  return (
+    firstHookString(value, ["prompt", "query", "text", "input", "content", "commandBody"]) ||
+    firstHookString(value.args, ["prompt", "query", "text", "input", "content", "commandBody"]) ||
+    extractInteractiveText(value)
+  );
+}
+
+function firstHookString(source, keys) {
+  if (!source || typeof source !== "object") {
+    return "";
+  }
+  for (const key of keys) {
+    if (typeof source[key] === "string" && source[key].trim()) {
+      return source[key].trim();
+    }
   }
   return "";
 }

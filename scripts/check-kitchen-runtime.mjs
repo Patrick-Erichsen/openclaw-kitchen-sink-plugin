@@ -39,6 +39,16 @@ const commands = registrations.registerCommand?.map(([command]) => command) ?? [
 assert.ok(commands.some((command) => command.name === "kitchen"), "registers kitchen command");
 assert.ok(commands.some((command) => command.name === "kitchen-sink"), "registers kitchen-sink command");
 
+const beforeToolHook = findHook("before_tool_call");
+const hookResult = await beforeToolHook(
+  { toolId: "kitchen_sink_image_job", args: { prompt: "generate an image with kitchen sink" } },
+  { providerId: "kitchen-sink-image" },
+);
+assert.equal(hookResult.pluginId, "openclaw-kitchen-sink-fixture");
+assert.equal(hookResult.route, "hook:before_tool_call");
+assert.equal(hookResult.scenarioId, "image.generate");
+assert.equal(hookResult.matchedKitchen, true);
+
 const imageProvider = findRegistration("registerImageGenerationProvider", "kitchen-sink-image");
 assert.equal(imageProvider.defaultModel, "kitchen-sink-image-v1");
 
@@ -111,6 +121,12 @@ function findRegistration(method, id) {
   const entry = registrations[method]?.map(([value]) => value).find((value) => value?.id === id);
   assert.ok(entry, `${method} ${id} registered`);
   return entry;
+}
+
+function findHook(name) {
+  const entry = registrations.on?.find(([hookName]) => hookName === name);
+  assert.ok(entry, `hook ${name} registered`);
+  return entry[1];
 }
 
 function fixedNow() {
