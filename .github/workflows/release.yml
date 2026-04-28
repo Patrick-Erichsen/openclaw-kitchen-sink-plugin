@@ -123,6 +123,9 @@ jobs:
     needs: validate
     if: needs.validate.outputs.npm_already_published != 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Setup Node.js
