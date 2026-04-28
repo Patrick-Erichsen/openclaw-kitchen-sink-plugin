@@ -1,0 +1,163 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish, for example v0.1.0
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      package_name: ${{ steps.verify.outputs.package_name }}
+      package_version: ${{ steps.verify.outputs.package_version }}
+      tag_name: ${{ steps.verify.outputs.tag_name }}
+      npm_already_published: ${{ steps.npm_exists.outputs.already_published }}
+      tarball_name: ${{ steps.pack.outputs.tarball_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.14.0"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup npm
+        run: npm install -g npm@11.6.2
+
+      - name: Validate release tag matches package version
+        id: verify
+        env:
+          TAG_NAME: ${{ inputs.tag || github.event.release.tag_name }}
+        run: |
+          PACKAGE_NAME="$(node -p "require('./package.json').name")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+
+          if [ -z "$TAG_NAME" ]; then
+            echo "tag input is required for workflow_dispatch, and release.tag_name is required for release runs."
+            exit 1
+          fi
+
+          EXPECTED_TAG="v${PACKAGE_VERSION}"
+
+          if [ "$TAG_NAME" != "$EXPECTED_TAG" ]; then
+            echo "Tag/version mismatch."
+            echo "Expected tag: $EXPECTED_TAG"
+            echo "Actual tag:   $TAG_NAME"
+            echo "package.json version: $PACKAGE_VERSION"
+            exit 1
+          fi
+
+          echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
+          echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Check if this version is already published to npm
+        id: npm_exists
+        run: |
+          if npm view "${{ steps.verify.outputs.package_name }}@${{ steps.verify.outputs.package_version }}" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.npm_exists.outputs.already_published != 'true'
+        run: npm ci
+
+      - name: Run checks
+        if: steps.npm_exists.outputs.already_published != 'true'
+        run: npm test
+
+      - name: Run runtime inspector
+        if: steps.npm_exists.outputs.already_published != 'true'
+        run: npm run plugin:inspect:runtime
+
+      - name: Verify package payload
+        if: steps.npm_exists.outputs.already_published != 'true'
+        run: npm run pack:check
+
+      - name: Pack npm release artifact
+        id: pack
+        if: steps.npm_exists.outputs.already_published != 'true'
+        run: |
+          TARBALL_NAME="$(npm pack --json | jq -r '.[0].filename')"
+          echo "tarball_name=$TARBALL_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Upload npm release artifact
+        if: steps.npm_exists.outputs.already_published != 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-release-tarball
+          path: ${{ steps.pack.outputs.tarball_name }}
+          if-no-files-found: error
+
+      - name: Report already-published release state
+        if: steps.npm_exists.outputs.already_published == 'true'
+        run: |
+          echo "Skipping publish: ${{ steps.verify.outputs.package_name }}@${{ steps.verify.outputs.package_version }} is already published to npm."
+
+  publish-npm:
+    needs: validate
+    if: needs.validate.outputs.npm_already_published != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.14.0"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Setup npm
+        run: npm install -g npm@11.6.2
+
+      - name: Download npm release artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: npm-release-tarball
+          path: ./release-artifacts
+
+      - name: Prepare trusted publishing auth
+        run: |
+          npm config delete //registry.npmjs.org/:_authToken || true
+
+      - name: Publish to npm
+        run: |
+          if [ "${{ github.event.repository.private }}" = "true" ]; then
+            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --access public
+          else
+            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --provenance --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ""
+
+  # TODO: Re-enable after the ClawHub org/package ownership for this plugin exists.
+  # publish-clawhub:
+  #   needs: validate
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   uses: ./.github/workflows/clawhub-package-publish.yml
+  #   with:
+  #     dry_run: false
+  #     ref: ${{ needs.validate.outputs.tag_name }}
+  #     version: ${{ needs.validate.outputs.package_version }}
+  #     source_ref: refs/tags/${{ needs.validate.outputs.tag_name }}
+  #   secrets:
+  #     clawhub_token: ${{ secrets.CLAWHUB_TOKEN }}

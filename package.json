@@ -7,13 +7,27 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Patrick-Erichsen/openclaw-kitchen-sink-plugin.git"
+    "url": "git+https://github.com/openclaw/kitchen-sink.git"
   },
+  "bugs": {
+    "url": "https://github.com/openclaw/kitchen-sink/issues"
+  },
+  "homepage": "https://github.com/openclaw/kitchen-sink#readme",
+  "keywords": [
+    "openclaw",
+    "openclaw-plugin",
+    "crabpot",
+    "plugin-inspector"
+  ],
   "files": [
     "src/",
     "openclaw.plugin.json",
+    "plugin-inspector.config.json",
     "README.md"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": "./src/index.js",
     "./runtime": "./src/index.js",
@@ -29,10 +43,15 @@
     "setupEntry": "./src/setup.js",
     "compat": {
       "pluginApi": "2026.4"
+    },
+    "build": {
+      "openclawVersion": "2026.4.26",
+      "pluginSdkVersion": "2026.4.26"
     }
   },
   "scripts": {
     "check": "npm run sync:surface -- --check && node scripts/check-sdk-surface.mjs && npm run plugin:inspect",
+    "pack:check": "node scripts/check-pack-payload.mjs",
     "plugin:inspect": "plugin-inspector check --config plugin-inspector.config.json --no-openclaw",
     "plugin:inspect:runtime": "PLUGIN_INSPECTOR_EXECUTE_ISOLATED=1 plugin-inspector check --config plugin-inspector.config.json --no-openclaw --runtime --mock-sdk",
     "sync:surface": "node scripts/sync-surface.mjs",

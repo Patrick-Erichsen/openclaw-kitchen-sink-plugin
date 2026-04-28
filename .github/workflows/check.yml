@@ -25,8 +25,19 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run plugin:inspect:runtime
+      - run: npm run pack:check
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: plugin-inspector-reports
           path: reports/plugin-inspector-*
+
+  # TODO: Re-enable after the ClawHub org/package ownership for this plugin exists.
+  # clawhub-dry-run:
+  #   if: github.event_name == 'pull_request'
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   uses: ./.github/workflows/clawhub-package-publish.yml
+  #   with:
+  #     dry_run: true

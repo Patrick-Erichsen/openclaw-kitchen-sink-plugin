@@ -29,6 +29,7 @@ contract coverage.
 npm install
 npm run sync:surface
 npm test
+npm run pack:check
 ```
 
 The `Update OpenClaw SDK Surface` workflow automatically checks
@@ -41,3 +42,13 @@ automation PR after those checks pass.
 Dependabot still watches npm dependencies, but ignores `openclaw` and
 `@openclaw/plugin-inspector` because those updates should flow through the
 generated updater instead of package-only bump PRs.
+
+## Publishing
+
+Tagged GitHub releases publish the validated package to npm through trusted
+publishing. The release tag must match `package.json`, for example `v0.1.0` for
+version `0.1.0`.
+
+ClawHub publish wiring is present but intentionally not called from CI yet. The
+ClawHub org/package ownership for this fixture still needs to be set up before
+the dry-run or release publish jobs are enabled.

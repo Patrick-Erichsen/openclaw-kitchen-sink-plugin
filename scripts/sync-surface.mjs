@@ -7,6 +7,7 @@ const check = process.argv.includes("--check");
 const surface = readOpenClawSurface();
 
 const generated = new Map([
+  ["package.json", renderPackageJson(surface)],
   ["src/generated-hooks.js", renderHooks(surface)],
   ["src/generated-registrars.js", renderRegistrars(surface)],
   ["src/generated-sdk-imports.ts", renderSdkImports(surface)],
@@ -154,6 +155,20 @@ function renderManifest({ manifestContracts, packageVersion }) {
     },
   };
   return `${JSON.stringify(manifest, null, 2)}\n`;
+}
+
+function renderPackageJson({ packageVersion }) {
+  const packageJson = JSON.parse(readFileSync(path.join(rootDir, "package.json"), "utf8"));
+  packageJson.openclaw ??= {};
+  packageJson.openclaw.build = {
+    ...(packageJson.openclaw.build ?? {}),
+    openclawVersion: packageVersion,
+    pluginSdkVersion: packageVersion,
+  };
+  if (packageJson.dependencies?.openclaw) {
+    packageJson.dependencies.openclaw = packageVersion;
+  }
+  return `${JSON.stringify(packageJson, null, 2)}\n`;
 }
 
 function header(packageVersion) {
