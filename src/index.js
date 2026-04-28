@@ -4,7 +4,7 @@ import { registerAllRegistrars } from "./generated-registrars.js";
 export const plugin = {
   id: "openclaw-kitchen-sink-fixture",
   name: "OpenClaw Kitchen Sink",
-  version: "0.0.2",
+  version: "0.1.1",
   description: "No-op plugin fixture covering OpenClaw plugin API seams.",
   register(api) {
     registerAllHooks(api);
