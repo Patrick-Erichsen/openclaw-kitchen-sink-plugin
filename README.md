@@ -1,7 +1,7 @@
 # OpenClaw Kitchen Sink Plugin
 
 Credential-free OpenClaw plugin fixture that intentionally touches the public
-plugin API surface.
+plugin API surface and works as a kitchen sink boilerplate for plugin authors.
 
 This repo is both:
 
