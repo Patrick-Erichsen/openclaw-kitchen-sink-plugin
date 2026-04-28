@@ -26,6 +26,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install openclaw@latest --save-exact --package-lock
+      - run: npm install @openclaw/plugin-inspector@latest --save-dev --save-exact --package-lock
       - run: npm run sync:surface
       - run: npm test
       - run: npm run plugin:inspect:runtime
@@ -38,33 +39,36 @@ jobs:
             echo "OpenClaw SDK surface is already current."
             exit 0
           fi
-          version="$(node -p "require('./node_modules/openclaw/package.json').version")"
-          branch="automation/openclaw-sdk-${version}"
+          openclaw_version="$(node -p "require('./node_modules/openclaw/package.json').version")"
+          inspector_version="$(node -p "require('./node_modules/@openclaw/plugin-inspector/package.json').version")"
+          branch="automation/openclaw-fixture-deps-openclaw-${openclaw_version}-inspector-${inspector_version}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$branch"
           git add package.json package-lock.json openclaw.plugin.json src/generated-hooks.js src/generated-registrars.js src/generated-sdk-imports.ts
-          git commit -m "Update OpenClaw SDK surface to ${version}"
+          git commit -m "Update OpenClaw fixture dependencies"
           git push --force-with-lease origin "$branch"
           pr_url="$(gh pr list --base main --head "$branch" --state open --json url --jq '.[0].url // ""')"
           if [[ -z "$pr_url" ]]; then
             pr_url="$(gh pr create \
               --base main \
               --head "$branch" \
-              --title "Update OpenClaw SDK surface to ${version}" \
-              --body "Automated update of the pinned OpenClaw SDK package and generated kitchen-sink API surface.")"
+              --title "Update OpenClaw fixture dependencies" \
+              --body "Automated update of openclaw@${openclaw_version}, @openclaw/plugin-inspector@${inspector_version}, and the generated kitchen-sink API surface.")"
           fi
           echo "url=$pr_url" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "openclaw_version=$openclaw_version" >> "$GITHUB_OUTPUT"
+          echo "inspector_version=$inspector_version" >> "$GITHUB_OUTPUT"
       - name: Auto-merge pull request
         if: ${{ steps.pull_request.outputs.url != '' }}
         env:
           GH_TOKEN: ${{ github.token }}
           PR_URL: ${{ steps.pull_request.outputs.url }}
-          VERSION: ${{ steps.pull_request.outputs.version }}
+          OPENCLAW_VERSION: ${{ steps.pull_request.outputs.openclaw_version }}
+          INSPECTOR_VERSION: ${{ steps.pull_request.outputs.inspector_version }}
         run: |
           gh pr merge "$PR_URL" \
             --squash \
             --delete-branch \
-            --subject "Update OpenClaw SDK surface to ${VERSION}" \
-            --body "Automated update of the pinned OpenClaw SDK package and generated kitchen-sink API surface."
+            --subject "Update OpenClaw fixture dependencies" \
+            --body "Automated update of openclaw@${OPENCLAW_VERSION}, @openclaw/plugin-inspector@${INSPECTOR_VERSION}, and the generated kitchen-sink API surface."

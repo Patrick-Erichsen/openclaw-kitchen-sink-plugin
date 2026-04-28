@@ -9,3 +9,6 @@ updates:
       openclaw-sdk:
         patterns:
           - "openclaw"
+    ignore:
+      - dependency-name: "openclaw"
+      - dependency-name: "@openclaw/plugin-inspector"
