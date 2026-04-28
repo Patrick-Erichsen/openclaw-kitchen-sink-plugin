@@ -123,7 +123,7 @@ ${pluginSdkExports.map((_, index) => `  | typeof sdk${index}`).join("\n")};
 function renderManifest({ manifestContracts, packageVersion }) {
   const contracts = Object.fromEntries(manifestContracts.map((field) => [field, [`kitchen-sink-${kebab(field)}`]]));
   const manifest = {
-    id: "openclaw-kitchen-sink",
+    id: "openclaw-kitchen-sink-fixture",
     name: "OpenClaw Kitchen Sink",
     version: "0.1.0",
     description: `Generated kitchen-sink fixture for OpenClaw plugin API surface ${packageVersion}.`,
@@ -132,7 +132,7 @@ function renderManifest({ manifestContracts, packageVersion }) {
     channels: ["kitchen-sink-channel"],
     providers: ["kitchen-sink-provider"],
     cliBackends: ["kitchen-sink-cli-backend"],
-    commandAliases: [{ command: "kitchen-sink", pluginId: "openclaw-kitchen-sink" }],
+    commandAliases: [{ command: "kitchen-sink", pluginId: "openclaw-kitchen-sink-fixture" }],
     activation: {
       onProviders: ["kitchen-sink-provider"],
       onChannels: ["kitchen-sink-channel"],

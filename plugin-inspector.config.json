@@ -1,7 +1,7 @@
 {
   "version": 1,
   "plugin": {
-    "id": "openclaw-kitchen-sink",
+    "id": "openclaw-kitchen-sink-fixture",
     "priority": "high",
     "seams": [
       "dynamic-tool",
