@@ -147,17 +147,16 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ""
 
-  # TODO: Re-enable after the ClawHub org/package ownership for this plugin exists.
-  # publish-clawhub:
-  #   needs: validate
-  #   permissions:
-  #     contents: read
-  #     id-token: write
-  #   uses: ./.github/workflows/clawhub-package-publish.yml
-  #   with:
-  #     dry_run: false
-  #     ref: ${{ needs.validate.outputs.tag_name }}
-  #     version: ${{ needs.validate.outputs.package_version }}
-  #     source_ref: refs/tags/${{ needs.validate.outputs.tag_name }}
-  #   secrets:
-  #     clawhub_token: ${{ secrets.CLAWHUB_TOKEN }}
+  publish-clawhub:
+    needs: validate
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/clawhub-package-publish.yml
+    with:
+      dry_run: false
+      ref: ${{ needs.validate.outputs.tag_name }}
+      version: ${{ needs.validate.outputs.package_version }}
+      source_ref: refs/tags/${{ needs.validate.outputs.tag_name }}
+    secrets:
+      clawhub_token: ${{ secrets.CLAWHUB_TOKEN }}
