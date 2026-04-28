@@ -13,8 +13,17 @@ read secrets, spawn processes, or require live credentials.
 
 ## API Surface Sync
 
-The generated files under `src/generated-*` are derived from the installed
-`openclaw` package:
+The generated fixture is derived from the installed `openclaw` package. It
+extracts the public plugin surface from:
+
+- registrar methods
+- hook names
+- manifest contract fields
+- exported plugin SDK subpaths
+
+It then writes explicit static evidence for those surfaces: hook registrations,
+registrar calls with no-op callback payloads, SDK import coverage, and manifest
+contract coverage.
 
 ```sh
 npm install
