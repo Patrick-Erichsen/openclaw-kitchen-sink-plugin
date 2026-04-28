@@ -9,8 +9,34 @@ This repo is both:
 - a dummy compatibility fixture for [Crabpot](https://github.com/openclaw/crabpot) and [plugin-inspector](https://github.com/openclaw/plugin-inspector)
 - a live plugin `@openclaw/kitchen-sink` that can be installed via clawhub and npm for testing features
 
-The runtime handlers are no-op probes. They should not call external services,
-read secrets, spawn processes, or require live credentials.
+The generated runtime probes are credential-free. The hand-owned Kitchen Sink
+runtime also registers deterministic direct commands, tools, image generation,
+media understanding, web search, web fetch, and text-provider catalog surfaces.
+It should not call external services, read secrets, spawn processes, or require
+live credentials.
+
+## Kitchen Runtime
+
+The fixture can be used dry, without an LLM:
+
+```text
+kitchen image generate a kitchen sink
+kitchen search kitchen sink provider routing
+kitchen explain the fixture
+```
+
+It also exposes provider and tool surfaces for live model routing:
+
+- `kitchen_sink_image_job` returns a deterministic image job, waits 10 seconds
+  in real runtime execution, then returns a bundled SVG image payload.
+- `kitchen-sink-image` is a registered image generation provider with aliases
+  `kitchen`, `kitchen-sink`, and `openclaw-kitchen-sink`.
+- `kitchen-sink-media` describes images with deterministic fixture text.
+- `kitchen-sink-search` and `kitchen-sink-fetch` provide credential-free web
+  tool fixtures.
+- `kitchen-sink-llm` exposes a deterministic text-provider catalog row,
+  provider-owned stream function, and prompt guidance so live LLM providers can
+  discover the Kitchen Sink routes.
 
 ## API Surface Sync
 

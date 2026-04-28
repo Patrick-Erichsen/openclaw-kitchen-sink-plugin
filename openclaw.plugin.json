@@ -14,12 +14,17 @@
     "kitchen-sink-channel"
   ],
   "providers": [
-    "kitchen-sink-provider"
+    "kitchen-sink-provider",
+    "kitchen-sink-llm"
   ],
   "cliBackends": [
     "kitchen-sink-cli-backend"
   ],
   "commandAliases": [
+    {
+      "command": "kitchen",
+      "pluginId": "openclaw-kitchen-sink-fixture"
+    },
     {
       "command": "kitchen-sink",
       "pluginId": "openclaw-kitchen-sink-fixture"
@@ -27,12 +32,15 @@
   ],
   "activation": {
     "onProviders": [
-      "kitchen-sink-provider"
+      "kitchen-sink-provider",
+      "kitchen-sink-llm",
+      "kitchen-sink-image"
     ],
     "onChannels": [
       "kitchen-sink-channel"
     ],
     "onCommands": [
+      "kitchen",
       "kitchen-sink"
     ],
     "onCapabilities": [
@@ -46,6 +54,20 @@
     "providers": [
       {
         "id": "kitchen-sink-provider",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
+      },
+      {
+        "id": "kitchen-sink-llm",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
+      },
+      {
+        "id": "kitchen-sink-image",
         "authMethods": [
           "none"
         ],
@@ -74,10 +96,12 @@
       "kitchen-sink-external-auth-providers"
     ],
     "imageGenerationProviders": [
-      "kitchen-sink-image-generation-providers"
+      "kitchen-sink-image-generation-providers",
+      "kitchen-sink-image"
     ],
     "mediaUnderstandingProviders": [
-      "kitchen-sink-media-understanding-providers"
+      "kitchen-sink-media-understanding-providers",
+      "kitchen-sink-media"
     ],
     "memoryEmbeddingProviders": [
       "kitchen-sink-memory-embedding-providers"
@@ -98,7 +122,10 @@
       "kitchen-sink-speech-providers"
     ],
     "tools": [
-      "kitchen-sink-tools"
+      "kitchen-sink-tools",
+      "kitchen_sink_image_job",
+      "kitchen_sink_text",
+      "kitchen_sink_search"
     ],
     "videoGenerationProviders": [
       "kitchen-sink-video-generation-providers"
@@ -107,10 +134,12 @@
       "kitchen-sink-web-content-extractors"
     ],
     "webFetchProviders": [
-      "kitchen-sink-web-fetch-providers"
+      "kitchen-sink-web-fetch-providers",
+      "kitchen-sink-fetch"
     ],
     "webSearchProviders": [
-      "kitchen-sink-web-search-providers"
+      "kitchen-sink-web-search-providers",
+      "kitchen-sink-search"
     ]
   },
   "configSchema": {

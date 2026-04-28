@@ -125,15 +125,17 @@ function renderRuntimeIndex() {
   const packageJson = JSON.parse(readFileSync(path.join(rootDir, "package.json"), "utf8"));
   return `import { registerAllHooks } from "./generated-hooks.js";
 import { registerAllRegistrars } from "./generated-registrars.js";
+import { registerKitchenSinkRuntime } from "./kitchen-runtime.js";
 
 export const plugin = {
   id: "openclaw-kitchen-sink-fixture",
   name: "OpenClaw Kitchen Sink",
   version: "${packageJson.version}",
-  description: "No-op plugin fixture covering OpenClaw plugin API seams.",
+  description: "Credential-free fixture covering OpenClaw plugin API seams.",
   register(api) {
     registerAllHooks(api);
     registerAllRegistrars(api);
+    registerKitchenSinkRuntime(api);
   },
 };
 
@@ -148,6 +150,13 @@ export default plugin;
 function renderManifest({ manifestContracts, packageVersion }) {
   const packageJson = JSON.parse(readFileSync(path.join(rootDir, "package.json"), "utf8"));
   const contracts = Object.fromEntries(manifestContracts.map((field) => [field, [`kitchen-sink-${kebab(field)}`]]));
+  appendContract(contracts, "imageGenerationProviders", "kitchen-sink-image");
+  appendContract(contracts, "mediaUnderstandingProviders", "kitchen-sink-media");
+  appendContract(contracts, "webSearchProviders", "kitchen-sink-search");
+  appendContract(contracts, "webFetchProviders", "kitchen-sink-fetch");
+  appendContract(contracts, "tools", "kitchen_sink_image_job");
+  appendContract(contracts, "tools", "kitchen_sink_text");
+  appendContract(contracts, "tools", "kitchen_sink_search");
   const manifest = {
     id: "openclaw-kitchen-sink-fixture",
     name: "OpenClaw Kitchen Sink",
@@ -156,17 +165,24 @@ function renderManifest({ manifestContracts, packageVersion }) {
     enabledByDefault: false,
     kind: ["tool", "hook", "channel", "provider"],
     channels: ["kitchen-sink-channel"],
-    providers: ["kitchen-sink-provider"],
+    providers: ["kitchen-sink-provider", "kitchen-sink-llm"],
     cliBackends: ["kitchen-sink-cli-backend"],
-    commandAliases: [{ command: "kitchen-sink", pluginId: "openclaw-kitchen-sink-fixture" }],
+    commandAliases: [
+      { command: "kitchen", pluginId: "openclaw-kitchen-sink-fixture" },
+      { command: "kitchen-sink", pluginId: "openclaw-kitchen-sink-fixture" },
+    ],
     activation: {
-      onProviders: ["kitchen-sink-provider"],
+      onProviders: ["kitchen-sink-provider", "kitchen-sink-llm", "kitchen-sink-image"],
       onChannels: ["kitchen-sink-channel"],
-      onCommands: ["kitchen-sink"],
+      onCommands: ["kitchen", "kitchen-sink"],
       onCapabilities: ["provider", "channel", "tool", "hook"],
     },
     setup: {
-      providers: [{ id: "kitchen-sink-provider", authMethods: ["none"], envVars: [] }],
+      providers: [
+        { id: "kitchen-sink-provider", authMethods: ["none"], envVars: [] },
+        { id: "kitchen-sink-llm", authMethods: ["none"], envVars: [] },
+        { id: "kitchen-sink-image", authMethods: ["none"], envVars: [] },
+      ],
       cliBackends: ["kitchen-sink-cli-backend"],
       configMigrations: ["kitchen-sink-config-migration"],
       requiresRuntime: false,
@@ -203,6 +219,15 @@ function header(packageVersion) {
 
 function kebab(value) {
   return value.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`).replace(/^-/, "");
+}
+
+function appendContract(contracts, field, id) {
+  if (!Array.isArray(contracts[field])) {
+    contracts[field] = [];
+  }
+  if (!contracts[field].includes(id)) {
+    contracts[field].push(id);
+  }
 }
 
 function readIfExists(filePath) {
