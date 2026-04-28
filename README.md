@@ -1,4 +1,4 @@
-# OpenClaw Kitchen Sink Plugin
+# 🧽 OpenClaw Kitchen Sink Plugin
 
 Credential-free OpenClaw plugin fixture that intentionally touches the public
 plugin API surface and works as a kitchen sink boilerplate for plugin authors.
