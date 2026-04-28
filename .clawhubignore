@@ -1,0 +1,6 @@
+.github/
+scripts/
+reports/
+.gitignore
+package-lock.json
+*.tgz
