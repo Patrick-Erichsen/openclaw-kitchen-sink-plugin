@@ -2,7 +2,7 @@
   "id": "openclaw-kitchen-sink",
   "name": "OpenClaw Kitchen Sink",
   "version": "0.1.0",
-  "description": "Generated kitchen-sink fixture for OpenClaw plugin API surface 2026.4.24.",
+  "description": "Generated kitchen-sink fixture for OpenClaw plugin API surface 2026.4.26.",
   "enabledByDefault": false,
   "kind": [
     "tool",
@@ -81,6 +81,9 @@
     ],
     "memoryEmbeddingProviders": [
       "kitchen-sink-memory-embedding-providers"
+    ],
+    "migrationProviders": [
+      "kitchen-sink-migration-providers"
     ],
     "musicGenerationProviders": [
       "kitchen-sink-music-generation-providers"
