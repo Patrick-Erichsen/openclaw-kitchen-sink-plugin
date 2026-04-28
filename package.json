@@ -39,7 +39,7 @@
     "test": "npm run check"
   },
   "dependencies": {
-    "openclaw": "2026.4.24"
+    "openclaw": "2026.4.26"
   },
   "devDependencies": {
     "@openclaw/plugin-inspector": "0.1.2"
