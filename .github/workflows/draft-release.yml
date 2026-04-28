@@ -1,0 +1,71 @@
+name: Draft Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag. Leave empty to derive v<package.json version>.
+        required: false
+        type: string
+      target:
+        description: Branch or SHA to tag.
+        required: false
+        type: string
+        default: main
+      prerelease:
+        description: Mark the draft as a prerelease.
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target || 'main' }}
+          fetch-depth: 0
+
+      - name: Draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_TAG: ${{ inputs.tag }}
+          INPUT_PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -euo pipefail
+
+          package_version="$(node -p "require('./package.json').version")"
+          tag="${INPUT_TAG:-v${package_version}}"
+          expected_tag="v${package_version}"
+
+          if [[ "$tag" != "$expected_tag" ]]; then
+            echo "::error::Tag/version mismatch. Expected ${expected_tag}, got ${tag}."
+            exit 1
+          fi
+
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            if [[ "$(git rev-parse "refs/tags/${tag}^{commit}")" != "$(git rev-parse HEAD)" ]]; then
+              echo "::error::Existing tag ${tag} does not point at HEAD."
+              exit 1
+            fi
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$tag" -m "$tag"
+            git push origin "$tag"
+          fi
+
+          release_flags=(--draft --verify-tag --generate-notes --title "$tag")
+          if [[ "$INPUT_PRERELEASE" == "true" ]]; then
+            release_flags+=(--prerelease)
+          fi
+
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" "${release_flags[@]}"
+          else
+            gh release create "$tag" "${release_flags[@]}"
+          fi
