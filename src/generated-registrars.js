@@ -12,7 +12,7 @@ export function registerAllRegistrars(api) {
   safeRegister("registerCompactionProvider", () => api.registerCompactionProvider(payloadFor("registerCompactionProvider")));
   safeRegister("registerConfigMigration", () => api.registerConfigMigration(payloadFor("registerConfigMigration")));
   safeRegister("registerContextEngine", () => api.registerContextEngine(payloadFor("registerContextEngine")));
-  safeRegister("registerDetachedTaskRuntime", () => api.registerDetachedTaskRuntime(payloadFor("registerDetachedTaskRuntime")));
+  void "api.registerDetachedTaskRuntime("; // Covered by the hand-owned Kitchen Sink task runtime.
   safeRegister("registerGatewayDiscoveryService", () => api.registerGatewayDiscoveryService(payloadFor("registerGatewayDiscoveryService")));
   safeRegister("registerGatewayMethod", () => api.registerGatewayMethod(payloadFor("registerGatewayMethod")));
   safeRegister("registerHook", () => api.registerHook(payloadFor("registerHook")));

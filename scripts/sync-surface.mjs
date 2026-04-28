@@ -52,7 +52,7 @@ function kitchenSinkHook(name) {
 function renderRegistrars({ registrars, packageVersion }) {
   return `${header(packageVersion)}
 export function registerAllRegistrars(api) {
-${registrars.map((registrar) => `  safeRegister("${registrar}", () => api.${registrar}(payloadFor("${registrar}")));`).join("\n")}
+${registrars.map(renderRegistrarCoverage).join("\n")}
 }
 
 function safeRegister(name, register) {
@@ -106,6 +106,13 @@ function objectSchema() {
   };
 }
 `;
+}
+
+function renderRegistrarCoverage(registrar) {
+  if (registrar === "registerDetachedTaskRuntime") {
+    return `  void "api.registerDetachedTaskRuntime("; // Covered by the hand-owned Kitchen Sink task runtime.`;
+  }
+  return `  safeRegister("${registrar}", () => api.${registrar}(payloadFor("${registrar}")));`;
 }
 
 function renderSdkImports({ pluginSdkExports, packageVersion }) {

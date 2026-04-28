@@ -69,6 +69,25 @@ const channelRoute = await channel.messaging.resolveOutboundSessionRoute({
 assert.equal(channelRoute.sessionKey, "kitchen:fixture-agent:kitchen-demo");
 assert.equal(channelRoute.peer.kind, "direct");
 
+const taskRuntime = registrations.registerDetachedTaskRuntime?.at(-1)?.[0];
+assert.equal(typeof taskRuntime?.createRunningTaskRun, "function");
+const task = taskRuntime.createRunningTaskRun({
+  runtime: "cli",
+  runId: "ks_image_runtime_test",
+  taskKind: "image.generate",
+  task: "generate an image with kitchen sink",
+});
+assert.equal(task.status, "running");
+assert.equal(task.sourceId, "openclaw-kitchen-sink-fixture");
+const completedTasks = taskRuntime.completeTaskRunByRunId({
+  runId: "ks_image_runtime_test",
+  runtime: "cli",
+  endedAt: 1_776_600_000_000,
+  terminalSummary: "Kitchen Sink image completed.",
+});
+assert.equal(completedTasks[0].status, "succeeded");
+assert.equal(completedTasks[0].terminalSummary, "Kitchen Sink image completed.");
+
 const imageProvider = findRegistration("registerImageGenerationProvider", "kitchen-sink-image");
 assert.equal(imageProvider.defaultModel, "kitchen-sink-image-v1");
 
