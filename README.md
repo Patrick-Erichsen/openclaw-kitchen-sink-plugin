@@ -1,4 +1,4 @@
-# OpenClaw Kitchen Sink Plugin
+# 🧽 OpenClaw Kitchen Sink Plugin
 
 Credential-free OpenClaw plugin fixture that intentionally touches the public
 plugin API surface and works as a kitchen sink boilerplate for plugin authors.
@@ -7,6 +7,7 @@ This repo is both:
 
 - a readable example for plugin authors
 - a dummy compatibility fixture for [Crabpot](https://github.com/openclaw/crabpot) and [plugin-inspector](https://github.com/openclaw/plugin-inspector)
+- a live plugin `@openclaw/kitchen-sink` that can be installed via clawhub and npm for testing features
 
 The runtime handlers are no-op probes. They should not call external services,
 read secrets, spawn processes, or require live credentials.
@@ -46,8 +47,13 @@ generated updater instead of package-only bump PRs.
 ## Publishing
 
 Tagged GitHub releases publish the validated package to npm through trusted
-publishing. The release tag must match `package.json`, for example `v0.1.0` for
-version `0.1.0`.
+publishing. The release tag must match `package.json`, for example `v0.0.1` for
+version `0.0.1`.
+
+Use the `Draft Release` workflow to create the tag and generated GitHub release
+notes. Publishing that draft release runs the npm publish workflow. `0.0.x`
+verification releases publish under the `verification` npm dist-tag so they do
+not replace the stable `latest` tag.
 
 ClawHub publish wiring is present but intentionally not called from CI yet. The
 ClawHub org/package ownership for this fixture still needs to be set up before

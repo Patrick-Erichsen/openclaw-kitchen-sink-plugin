@@ -59,6 +59,10 @@ if (missingFiles.length > 0) {
   issues.push(`missing packed files: ${missingFiles.join(", ")}`);
 }
 
+if (packageJson.name !== "@openclaw/kitchen-sink") {
+  issues.push('package name must be "@openclaw/kitchen-sink"');
+}
+
 requireStringArray("openclaw.extensions", packageJson.openclaw?.extensions, ["./src/index.js"]);
 requireStringArray("openclaw.runtimeExtensions", packageJson.openclaw?.runtimeExtensions, [
   "./src/index.js",

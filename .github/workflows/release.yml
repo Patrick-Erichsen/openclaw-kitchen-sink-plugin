@@ -21,6 +21,7 @@ jobs:
       package_name: ${{ steps.verify.outputs.package_name }}
       package_version: ${{ steps.verify.outputs.package_version }}
       tag_name: ${{ steps.verify.outputs.tag_name }}
+      npm_tag: ${{ steps.verify.outputs.npm_tag }}
       npm_already_published: ${{ steps.npm_exists.outputs.already_published }}
       tarball_name: ${{ steps.pack.outputs.tarball_name }}
 
@@ -47,6 +48,11 @@ jobs:
         run: |
           PACKAGE_NAME="$(node -p "require('./package.json').name")"
           PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          NPM_TAG="latest"
+
+          if [[ "$PACKAGE_VERSION" == 0.0.* ]]; then
+            NPM_TAG="verification"
+          fi
 
           if [ -z "$TAG_NAME" ]; then
             echo "tag input is required for workflow_dispatch, and release.tag_name is required for release runs."
@@ -66,6 +72,7 @@ jobs:
           echo "package_name=$PACKAGE_NAME" >> "$GITHUB_OUTPUT"
           echo "package_version=$PACKAGE_VERSION" >> "$GITHUB_OUTPUT"
           echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "npm_tag=$NPM_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Check if this version is already published to npm
         id: npm_exists
@@ -116,6 +123,9 @@ jobs:
     needs: validate
     if: needs.validate.outputs.npm_already_published != 'true'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Setup Node.js
@@ -140,9 +150,9 @@ jobs:
       - name: Publish to npm
         run: |
           if [ "${{ github.event.repository.private }}" = "true" ]; then
-            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --access public
+            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --access public --tag "${{ needs.validate.outputs.npm_tag }}"
           else
-            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --provenance --access public
+            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --provenance --access public --tag "${{ needs.validate.outputs.npm_tag }}"
           fi
         env:
           NODE_AUTH_TOKEN: ""
