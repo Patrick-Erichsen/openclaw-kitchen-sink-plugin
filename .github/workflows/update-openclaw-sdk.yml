@@ -2,12 +2,16 @@ name: Update OpenClaw SDK Surface
 
 on:
   schedule:
-    - cron: "17 9 * * *"
+    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
+
+concurrency:
+  group: update-openclaw-sdk-surface
+  cancel-in-progress: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -24,7 +28,9 @@ jobs:
       - run: npm install openclaw@latest --save-exact --package-lock
       - run: npm run sync:surface
       - run: npm test
+      - run: npm run plugin:inspect:runtime
       - name: Open pull request
+        id: pull_request
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -40,8 +46,25 @@ jobs:
           git add package.json package-lock.json openclaw.plugin.json src/generated-hooks.js src/generated-registrars.js src/generated-sdk-imports.ts
           git commit -m "Update OpenClaw SDK surface to ${version}"
           git push --force-with-lease origin "$branch"
-          gh pr create \
-            --base main \
-            --head "$branch" \
-            --title "Update OpenClaw SDK surface to ${version}" \
+          pr_url="$(gh pr list --base main --head "$branch" --state open --json url --jq '.[0].url // ""')"
+          if [[ -z "$pr_url" ]]; then
+            pr_url="$(gh pr create \
+              --base main \
+              --head "$branch" \
+              --title "Update OpenClaw SDK surface to ${version}" \
+              --body "Automated update of the pinned OpenClaw SDK package and generated kitchen-sink API surface.")"
+          fi
+          echo "url=$pr_url" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Auto-merge pull request
+        if: ${{ steps.pull_request.outputs.url != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ steps.pull_request.outputs.url }}
+          VERSION: ${{ steps.pull_request.outputs.version }}
+        run: |
+          gh pr merge "$PR_URL" \
+            --squash \
+            --delete-branch \
+            --subject "Update OpenClaw SDK surface to ${VERSION}" \
             --body "Automated update of the pinned OpenClaw SDK package and generated kitchen-sink API surface."

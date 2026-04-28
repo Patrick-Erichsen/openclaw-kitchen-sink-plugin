@@ -22,9 +22,15 @@ npm run sync:surface
 npm test
 ```
 
-When Dependabot bumps `openclaw`, `npm test` verifies that this fixture still
-covers every discovered hook, registrar, manifest contract key, and plugin SDK
-export path for that package version.
+The `Update OpenClaw SDK Surface` workflow checks `openclaw@latest` every 10
+minutes. When a new version changes the public plugin surface, it regenerates
+the pinned dependency, lockfile, manifest, hooks, registrars, and SDK import
+fixture files, runs the static and runtime plugin-inspector checks, opens an
+automation PR, and squash-merges it after those checks pass.
+
+Dependabot still watches npm dependencies, but `openclaw` surface updates should
+flow through the generated updater because a package-only bump leaves the
+generated fixture files stale.
 
 ## Why Generated Files Exist
 
