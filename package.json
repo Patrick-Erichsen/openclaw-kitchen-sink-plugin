@@ -54,6 +54,7 @@
     "pack:check": "node scripts/check-pack-payload.mjs",
     "plugin:inspect": "plugin-inspector check --config plugin-inspector.config.json --no-openclaw",
     "plugin:inspect:runtime": "PLUGIN_INSPECTOR_EXECUTE_ISOLATED=1 plugin-inspector check --config plugin-inspector.config.json --no-openclaw --runtime --mock-sdk",
+    "sdk:target-check": "node scripts/check-target-sdk-imports.mjs",
     "sync:surface": "node scripts/sync-surface.mjs",
     "test": "npm run check"
   },

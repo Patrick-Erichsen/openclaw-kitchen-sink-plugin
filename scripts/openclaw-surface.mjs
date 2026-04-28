@@ -4,14 +4,72 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 
+// These bundled-plugin convenience barrels existed in published OpenClaw builds
+// but were retired from the public package export contract on current main.
+const retiredPluginSdkExports = new Set([
+  "openclaw/plugin-sdk/bluebubbles",
+  "openclaw/plugin-sdk/bluebubbles-policy",
+  "openclaw/plugin-sdk/browser-cdp",
+  "openclaw/plugin-sdk/browser-config-runtime",
+  "openclaw/plugin-sdk/browser-config-support",
+  "openclaw/plugin-sdk/browser-control-auth",
+  "openclaw/plugin-sdk/browser-node-runtime",
+  "openclaw/plugin-sdk/browser-profiles",
+  "openclaw/plugin-sdk/browser-security-runtime",
+  "openclaw/plugin-sdk/browser-setup-tools",
+  "openclaw/plugin-sdk/browser-support",
+  "openclaw/plugin-sdk/diagnostics-otel",
+  "openclaw/plugin-sdk/diagnostics-prometheus",
+  "openclaw/plugin-sdk/diffs",
+  "openclaw/plugin-sdk/feishu",
+  "openclaw/plugin-sdk/feishu-conversation",
+  "openclaw/plugin-sdk/feishu-setup",
+  "openclaw/plugin-sdk/github-copilot-login",
+  "openclaw/plugin-sdk/github-copilot-token",
+  "openclaw/plugin-sdk/googlechat",
+  "openclaw/plugin-sdk/googlechat-runtime-shared",
+  "openclaw/plugin-sdk/irc",
+  "openclaw/plugin-sdk/irc-surface",
+  "openclaw/plugin-sdk/line",
+  "openclaw/plugin-sdk/line-core",
+  "openclaw/plugin-sdk/line-runtime",
+  "openclaw/plugin-sdk/line-surface",
+  "openclaw/plugin-sdk/llm-task",
+  "openclaw/plugin-sdk/matrix",
+  "openclaw/plugin-sdk/matrix-helper",
+  "openclaw/plugin-sdk/matrix-runtime-heavy",
+  "openclaw/plugin-sdk/matrix-runtime-shared",
+  "openclaw/plugin-sdk/matrix-runtime-surface",
+  "openclaw/plugin-sdk/matrix-surface",
+  "openclaw/plugin-sdk/matrix-thread-bindings",
+  "openclaw/plugin-sdk/mattermost",
+  "openclaw/plugin-sdk/mattermost-policy",
+  "openclaw/plugin-sdk/memory-core",
+  "openclaw/plugin-sdk/memory-lancedb",
+  "openclaw/plugin-sdk/msteams",
+  "openclaw/plugin-sdk/nextcloud-talk",
+  "openclaw/plugin-sdk/nostr",
+  "openclaw/plugin-sdk/opencode",
+  "openclaw/plugin-sdk/telegram-command-ui",
+  "openclaw/plugin-sdk/thread-ownership",
+  "openclaw/plugin-sdk/tlon",
+  "openclaw/plugin-sdk/twitch",
+  "openclaw/plugin-sdk/voice-call",
+  "openclaw/plugin-sdk/volc-model-catalog-shared",
+  "openclaw/plugin-sdk/zalo",
+  "openclaw/plugin-sdk/zalo-setup",
+  "openclaw/plugin-sdk/zalouser",
+]);
+
 export function readOpenClawSurface() {
-  const packageEntryPath = require.resolve("openclaw");
+  const packageEntryPath = resolveOpenClawPackageEntry();
   const packageRoot = findPackageRoot(packageEntryPath);
   const packageJsonPath = path.join(packageRoot, "package.json");
   const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8"));
   const pluginSdkExports = Object.keys(packageJson.exports ?? {})
     .filter((specifier) => specifier === "./plugin-sdk" || specifier.startsWith("./plugin-sdk/"))
     .map((specifier) => `openclaw/${specifier.slice(2)}`)
+    .filter((specifier) => !retiredPluginSdkExports.has(specifier))
     .sort();
 
   const apiBuilderPath = firstExistingPath([
@@ -39,6 +97,14 @@ export function readOpenClawSurface() {
     hooks: parseHookNames(hookTypesSource),
     manifestContracts: parseTypeFields(manifestSource, "PluginManifestContracts"),
   };
+}
+
+function resolveOpenClawPackageEntry() {
+  const packageRoot = process.env.OPENCLAW_PACKAGE_ROOT;
+  if (packageRoot) {
+    return path.join(path.resolve(packageRoot), "package.json");
+  }
+  return require.resolve("openclaw");
 }
 
 function findPackageRoot(entryPath) {
