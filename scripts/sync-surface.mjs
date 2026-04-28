@@ -11,6 +11,7 @@ const generated = new Map([
   ["src/generated-hooks.js", renderHooks(surface)],
   ["src/generated-registrars.js", renderRegistrars(surface)],
   ["src/generated-sdk-imports.ts", renderSdkImports(surface)],
+  ["src/index.js", renderRuntimeIndex(surface)],
   ["openclaw.plugin.json", renderManifest(surface)],
 ]);
 
@@ -120,12 +121,37 @@ ${pluginSdkExports.map((_, index) => `  | typeof sdk${index}`).join("\n")};
 `;
 }
 
+function renderRuntimeIndex() {
+  const packageJson = JSON.parse(readFileSync(path.join(rootDir, "package.json"), "utf8"));
+  return `import { registerAllHooks } from "./generated-hooks.js";
+import { registerAllRegistrars } from "./generated-registrars.js";
+
+export const plugin = {
+  id: "openclaw-kitchen-sink",
+  name: "OpenClaw Kitchen Sink",
+  version: "${packageJson.version}",
+  description: "No-op plugin fixture covering OpenClaw plugin API seams.",
+  register(api) {
+    registerAllHooks(api);
+    registerAllRegistrars(api);
+  },
+};
+
+export function register(api) {
+  plugin.register(api);
+}
+
+export default plugin;
+`;
+}
+
 function renderManifest({ manifestContracts, packageVersion }) {
+  const packageJson = JSON.parse(readFileSync(path.join(rootDir, "package.json"), "utf8"));
   const contracts = Object.fromEntries(manifestContracts.map((field) => [field, [`kitchen-sink-${kebab(field)}`]]));
   const manifest = {
     id: "openclaw-kitchen-sink",
     name: "OpenClaw Kitchen Sink",
-    version: "0.1.0",
+    version: packageJson.version,
     description: `Generated kitchen-sink fixture for OpenClaw plugin API surface ${packageVersion}.`,
     enabledByDefault: false,
     kind: ["tool", "hook", "channel", "provider"],

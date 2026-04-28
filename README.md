@@ -46,8 +46,8 @@ generated updater instead of package-only bump PRs.
 ## Publishing
 
 Tagged GitHub releases publish the validated package to npm through trusted
-publishing. The release tag must match `package.json`, for example `v0.1.0` for
-version `0.1.0`.
+publishing. The release tag must match `package.json`, for example `v0.0.0` for
+version `0.0.0`.
 
 ClawHub publish wiring is present but intentionally not called from CI yet. The
 ClawHub org/package ownership for this fixture still needs to be set up before
