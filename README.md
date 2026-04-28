@@ -11,7 +11,8 @@ This repo is both:
 
 The generated runtime probes are credential-free. The hand-owned Kitchen Sink
 runtime also registers deterministic direct commands, tools, image generation,
-media understanding, web search, web fetch, and text-provider catalog surfaces.
+media understanding, web search, web fetch, channel, hook, detached-task, and
+text-provider catalog surfaces.
 It should not call external services, read secrets, spawn processes, or require
 live credentials.
 
@@ -27,6 +28,8 @@ kitchen explain the fixture
 
 It also exposes provider and tool surfaces for live model routing:
 
+- `src/scenarios.js` is the shared deterministic fixture engine used by dry
+  commands, tools, providers, hooks, channel delivery, and tests.
 - `kitchen_sink_image_job` returns a deterministic image job, waits 10 seconds
   in real runtime execution, then returns a bundled SVG image payload.
 - `kitchen-sink-image` is a registered image generation provider with aliases
@@ -34,9 +37,17 @@ It also exposes provider and tool surfaces for live model routing:
 - `kitchen-sink-media` describes images with deterministic fixture text.
 - `kitchen-sink-search` and `kitchen-sink-fetch` provide credential-free web
   tool fixtures.
+- `kitchen-sink-channel` is a credential-free channel fixture that can resolve
+  local accounts, route outbound sessions, and deliver deterministic text/media
+  records.
 - `kitchen-sink-llm` exposes a deterministic text-provider catalog row,
   provider-owned stream function, and prompt guidance so live LLM providers can
   discover the Kitchen Sink routes.
+- generated hooks classify Kitchen Sink prompts, tool calls, and provider
+  selections into shared scenario ids such as `image.generate`, `web.search`,
+  and `text.reply`.
+- the detached-task runtime records queued/running/completed/cancelled task
+  transitions in memory so async OpenClaw task surfaces can be smoke-tested.
 
 ## API Surface Sync
 
