@@ -4,6 +4,8 @@ export const MEDIA_PROVIDER_ID = "kitchen-sink-media";
 export const TEXT_PROVIDER_ID = "kitchen-sink-llm";
 export const WEB_SEARCH_PROVIDER_ID = "kitchen-sink-search";
 export const WEB_FETCH_PROVIDER_ID = "kitchen-sink-fetch";
+export const CHANNEL_ID = "kitchen-sink-channel";
+export const CHANNEL_ACCOUNT_ID = "local";
 export const DEFAULT_IMAGE_MODEL = "kitchen-sink-image-v1";
 export const DEFAULT_MEDIA_MODEL = "kitchen-sink-vision-v1";
 export const DEFAULT_TEXT_MODEL = "kitchen-sink-text-v1";
@@ -119,6 +121,42 @@ export function kitchenPromptGuidance() {
     "- Use kitchen_sink_search for deterministic search fixture queries.",
     "- Use kitchen_sink_text for deterministic text fixture responses.",
   ];
+}
+
+export function createKitchenChannelDelivery({ kind = "text", text = "", to = "kitchen" }) {
+  const normalizedTo = normalizeKitchenTarget(to);
+  const id = `ks_channel_${stableHash(`${kind}:${normalizedTo}:${text}`).slice(0, 10)}`;
+  return {
+    channel: CHANNEL_ID,
+    messageId: id,
+    conversationId: normalizedTo,
+    channelId: normalizedTo,
+    timestamp: Date.now(),
+    meta: {
+      kitchenSink: true,
+      pluginId: PLUGIN_ID,
+      scenarioId: inferKitchenScenario({ text }),
+      kind,
+    },
+  };
+}
+
+export function kitchenChannelAccount(accountId = CHANNEL_ACCOUNT_ID) {
+  return {
+    accountId: accountId || CHANNEL_ACCOUNT_ID,
+    name: "Kitchen Sink Local",
+    enabled: true,
+    configured: true,
+    statusState: "fixture",
+    linked: true,
+    running: true,
+    connected: true,
+    mode: "local",
+  };
+}
+
+export function normalizeKitchenTarget(raw) {
+  return String(raw ?? "").replace(/^kitchen:/i, "").replace(/\s+/g, "-").trim() || "kitchen";
 }
 
 export async function runKitchenCommand(runtime, args) {

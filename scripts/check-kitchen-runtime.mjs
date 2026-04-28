@@ -49,6 +49,26 @@ assert.equal(hookResult.route, "hook:before_tool_call");
 assert.equal(hookResult.scenarioId, "image.generate");
 assert.equal(hookResult.matchedKitchen, true);
 
+const channel = findRegistration("registerChannel", "kitchen-sink-channel");
+const channelAccount = channel.config.resolveAccount({}, "local");
+assert.equal(channelAccount.configured, true);
+assert.equal(channelAccount.enabled, true);
+const channelDelivery = await channel.outbound.sendText({
+  cfg: {},
+  to: "kitchen demo",
+  text: "kitchen generate an image",
+});
+assert.equal(channelDelivery.channel, "kitchen-sink-channel");
+assert.equal(channelDelivery.conversationId, "kitchen-demo");
+assert.equal(channelDelivery.meta.scenarioId, "image.generate");
+const channelRoute = await channel.messaging.resolveOutboundSessionRoute({
+  cfg: {},
+  agentId: "fixture-agent",
+  target: "kitchen demo",
+});
+assert.equal(channelRoute.sessionKey, "kitchen:fixture-agent:kitchen-demo");
+assert.equal(channelRoute.peer.kind, "direct");
+
 const imageProvider = findRegistration("registerImageGenerationProvider", "kitchen-sink-image");
 assert.equal(imageProvider.defaultModel, "kitchen-sink-image-v1");
 

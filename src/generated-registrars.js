@@ -56,11 +56,12 @@ export const apiSurfaceProbeFailures = [];
 
 function payloadFor(name) {
   const id = name.replace(/^register/, "").replace(/[A-Z]/g, (letter, index) => (index === 0 ? "" : "-") + letter.toLowerCase()) || "probe";
+  const probeId = name === "registerChannel" ? "kitchen-sink-channel-probe" : "kitchen-sink-" + id;
   return {
-    id: "kitchen-sink-" + id,
-    name: "kitchen-sink-" + id,
+    id: probeId,
+    name: probeId,
     description: "Kitchen-sink no-op probe for " + name + ".",
-    command: "kitchen-sink-" + id,
+    command: probeId,
     path: "/kitchen-sink/" + id,
     method: "POST",
     inputSchema: objectSchema(),

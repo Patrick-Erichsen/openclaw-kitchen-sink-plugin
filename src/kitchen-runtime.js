@@ -2,22 +2,27 @@ import {
   DEFAULT_IMAGE_MODEL,
   DEFAULT_MEDIA_MODEL,
   DEFAULT_TEXT_MODEL,
+  CHANNEL_ACCOUNT_ID,
+  CHANNEL_ID,
   IMAGE_PROVIDER_ID,
   MEDIA_PROVIDER_ID,
   PLUGIN_ID,
   TEXT_PROVIDER_ID,
   WEB_FETCH_PROVIDER_ID,
   WEB_SEARCH_PROVIDER_ID,
+  createKitchenChannelDelivery,
   createKitchenScenarioRuntime,
   createKitchenSinkImageAsset,
   createKitchenTextStream,
   extractInteractiveText,
+  kitchenChannelAccount,
   kitchenImageDescription,
   kitchenPromptGuidance,
   kitchenSearchSchema,
   kitchenTextModelDefinition,
   kitchenTextProviderConfig,
   kitchenToolSchema,
+  normalizeKitchenTarget,
   readPrompt,
   readQuery,
   readUrl,
@@ -39,6 +44,7 @@ export function registerKitchenSinkRuntime(api, options = {}) {
   optionalRegister(api, "registerInteractiveHandler", () =>
     api.registerInteractiveHandler(buildKitchenInteractiveHandler(runtime)),
   );
+  optionalRegister(api, "registerChannel", () => api.registerChannel(buildKitchenChannel()));
   optionalRegister(api, "registerTool", () => api.registerTool(buildKitchenImageTool(runtime)));
   optionalRegister(api, "registerTool", () => api.registerTool(buildKitchenTextTool(runtime)));
   optionalRegister(api, "registerTool", () => api.registerTool(buildKitchenSearchTool()));
@@ -144,6 +150,84 @@ function buildKitchenSearchTool() {
     handler: async (input) => runKitchenSearch(readQuery(input)),
     run: async (input) => runKitchenSearch(readQuery(input)),
     execute: async (input) => runKitchenSearch(readQuery(input)),
+  };
+}
+
+function buildKitchenChannel() {
+  return {
+    id: CHANNEL_ID,
+    meta: {
+      id: CHANNEL_ID,
+      label: "Kitchen Sink",
+      selectionLabel: "Kitchen Sink",
+      docsPath: "/plugins/kitchen-sink",
+      docsLabel: "Kitchen Sink",
+      blurb: "Credential-free channel fixture for deterministic Kitchen Sink conversations.",
+      aliases: ["kitchen", "kitchen-sink"],
+      exposure: { configured: true, setup: true, docs: true },
+      showConfigured: true,
+      showInSetup: true,
+    },
+    capabilities: {
+      chatTypes: ["direct", "group", "channel"],
+      media: true,
+      nativeCommands: true,
+      reply: true,
+      threads: true,
+    },
+    config: {
+      listAccountIds: () => [CHANNEL_ACCOUNT_ID],
+      defaultAccountId: () => CHANNEL_ACCOUNT_ID,
+      resolveAccount: (_cfg, accountId) => kitchenChannelAccount(accountId || CHANNEL_ACCOUNT_ID),
+      isEnabled: () => true,
+      isConfigured: () => true,
+      describeAccount: (account) => kitchenChannelAccount(account.accountId),
+      resolveDefaultTo: () => "kitchen",
+    },
+    status: {
+      defaultRuntime: kitchenChannelAccount(),
+      probeAccount: async ({ account }) => ({
+        ok: true,
+        accountId: account.accountId,
+        scenarioId: "channel.probe",
+      }),
+      buildAccountSnapshot: ({ account }) => kitchenChannelAccount(account.accountId),
+    },
+    outbound: {
+      deliveryMode: "direct",
+      textChunkLimit: 2000,
+      sendText: async (ctx) =>
+        createKitchenChannelDelivery({ kind: "text", text: ctx?.text, to: ctx?.to }),
+      sendMedia: async (ctx) =>
+        createKitchenChannelDelivery({ kind: "media", text: ctx?.mediaUrl || ctx?.text, to: ctx?.to }),
+    },
+    messaging: {
+      normalizeTarget: (raw) => normalizeKitchenTarget(raw),
+      parseExplicitTarget: ({ raw }) => ({
+        to: normalizeKitchenTarget(raw),
+        chatType: "direct",
+      }),
+      inferTargetChatType: () => "direct",
+      resolveOutboundSessionRoute: ({ agentId, target, threadId }) => {
+        const to = normalizeKitchenTarget(target);
+        return {
+          sessionKey: `kitchen:${agentId || "agent"}:${to}`,
+          baseSessionKey: `kitchen:${agentId || "agent"}:${to}`,
+          peer: { kind: "direct", id: to },
+          chatType: "direct",
+          from: CHANNEL_ACCOUNT_ID,
+          to,
+          threadId: threadId || undefined,
+        };
+      },
+    },
+    agentPrompt: {
+      messageToolHints: () => kitchenPromptGuidance(),
+      messageToolCapabilities: () => [
+        "Kitchen Sink channel accepts deterministic dry messages prefixed with kitchen.",
+        "Kitchen Sink channel can deliver text and media without external credentials.",
+      ],
+    },
   };
 }
 
