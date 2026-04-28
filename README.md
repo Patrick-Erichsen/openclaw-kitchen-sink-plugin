@@ -7,6 +7,7 @@ This repo is both:
 
 - a readable example for plugin authors
 - a dummy compatibility fixture for [Crabpot](https://github.com/openclaw/crabpot) and [plugin-inspector](https://github.com/openclaw/plugin-inspector)
+- a live plugin `@openclaw/kitchen-sink` that can be installed via clawhub and npm for testing features
 
 The runtime handlers are no-op probes. They should not call external services,
 read secrets, spawn processes, or require live credentials.
