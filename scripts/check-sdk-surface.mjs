@@ -12,7 +12,7 @@ const manifest = JSON.parse(read("openclaw.plugin.json"));
 const errors = [];
 
 for (const hook of surface.hooks) {
-  if (!hooksSource.includes(`api.on("${hook}"`)) {
+  if (!hooksSource.includes(`api.on(${JSON.stringify(hook)}`)) {
     errors.push(`missing hook coverage: ${hook}`);
   }
 }

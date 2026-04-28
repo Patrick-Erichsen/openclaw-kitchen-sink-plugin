@@ -39,7 +39,7 @@ console.log(
 function renderHooks({ hooks, packageVersion }) {
   return `${header(packageVersion)}
 export function registerAllHooks(api) {
-${hooks.map((hook) => `  api.on("${hook}", kitchenSinkHook("${hook}"));`).join("\n")}
+${hooks.map((hook) => `  api.on(${JSON.stringify(hook)}, kitchenSinkHook(${JSON.stringify(hook)}));`).join("\n")}
 }
 
 function kitchenSinkHook(name) {
