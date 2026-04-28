@@ -6,7 +6,7 @@ import { plugin } from "../src/index.js";
 const registrations = {};
 const api = new Proxy(
   {
-    id: "openclaw-kitchen-sink",
+    id: "openclaw-kitchen-sink-fixture",
     registrationMode: "full",
     config: {},
     logger: console,
@@ -43,6 +43,7 @@ const imageProvider = findRegistration("registerImageGenerationProvider", "kitch
 assert.equal(imageProvider.defaultModel, "kitchen-sink-image-v1");
 
 const sleeps = [];
+const { PLUGIN_ID, runKitchenScenario } = await import("../src/scenarios.js");
 const { createKitchenSinkRuntime } = await import("../src/kitchen-runtime.js");
 const fastRuntime = createKitchenSinkRuntime({
   delayMs: 10_000,
@@ -53,10 +54,24 @@ const fastRuntime = createKitchenSinkRuntime({
 });
 const imageResult = await fastRuntime.runImageJob({ prompt: "generate an image with kitchen sink" });
 assert.deepEqual(sleeps, [10_000]);
+assert.equal(imageResult.scenarioId, "image.generate");
+assert.equal(imageResult.route, "provider:image");
 assert.equal(imageResult.job.status, "completed");
+assert.equal(imageResult.job.pluginId, "openclaw-kitchen-sink-fixture");
+assert.equal(imageResult.image.metadata.pluginId, "openclaw-kitchen-sink-fixture");
 assert.equal(imageResult.image.mimeType, "image/svg+xml");
 assert.ok(imageResult.image.buffer.toString("utf8").includes("Kitchen Sink Fixture"));
 assert.ok(imageResult.image.dataUrl.startsWith("data:image/svg+xml;base64,"));
+
+const scenarioResult = await runKitchenScenario(fastRuntime, {
+  scenario: "web.fetch",
+  url: "kitchen://fixture/readme",
+  route: "test:scenario-engine",
+});
+assert.equal(PLUGIN_ID, "openclaw-kitchen-sink-fixture");
+assert.equal(scenarioResult.scenarioId, "web.fetch");
+assert.equal(scenarioResult.route, "test:scenario-engine");
+assert.match(scenarioResult.content, /deterministic document/);
 
 const mediaProvider = findRegistration("registerMediaUnderstandingProvider", "kitchen-sink-media");
 const mediaResult = await mediaProvider.describeImage({

@@ -32,6 +32,7 @@ const requiredFiles = [
   "plugin-inspector.config.json",
   "src/index.js",
   "src/kitchen-runtime.js",
+  "src/scenarios.js",
   "src/setup.js",
   "src/generated-hooks.js",
   "src/generated-registrars.js",

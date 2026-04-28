@@ -31,6 +31,7 @@
   "exports": {
     ".": "./src/index.js",
     "./runtime": "./src/index.js",
+    "./scenarios": "./src/scenarios.js",
     "./setup": "./src/setup.js"
   },
   "openclaw": {
