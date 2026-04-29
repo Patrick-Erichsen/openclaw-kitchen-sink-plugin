@@ -41,14 +41,13 @@ jobs:
           fi
           openclaw_version="$(node -p "require('./node_modules/openclaw/package.json').version")"
           inspector_version="$(node -p "require('./node_modules/@openclaw/plugin-inspector/package.json').version")"
-          branch="automation/openclaw-fixture-deps-openclaw-${openclaw_version}-inspector-${inspector_version}"
+          branch="automation/openclaw-fixture-deps-openclaw-${openclaw_version}-inspector-${inspector_version}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin "$branch:refs/remotes/origin/$branch" || true
           git checkout -B "$branch"
           git add package.json package-lock.json openclaw.plugin.json src/generated-hooks.js src/generated-registrars.js src/generated-sdk-imports.ts
           git commit -m "Update OpenClaw fixture dependencies"
-          git push --force-with-lease origin "$branch"
+          git push origin "$branch"
           pr_url="$(gh pr list --base main --head "$branch" --state open --json url --jq '.[0].url // ""')"
           if [[ -z "$pr_url" ]]; then
             pr_url="$(gh pr create \
