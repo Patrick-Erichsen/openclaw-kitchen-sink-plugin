@@ -22,7 +22,10 @@ The fixture can be used dry, without an LLM:
 
 ```text
 kitchen image generate a kitchen sink
+kitchen image rate limit
+kitchen image timeout
 kitchen search kitchen sink provider routing
+kitchen fetch kitchen://fixture/redirect
 kitchen explain the fixture
 ```
 
@@ -32,18 +35,23 @@ It also exposes provider and tool surfaces for live model routing:
   commands, tools, providers, hooks, channel delivery, and tests.
 - `kitchen_sink_image_job` returns a deterministic image job, waits 10 seconds
   in real runtime execution, then returns the bundled `kitchen_sink_office.png`
-  image payload.
+  image payload with PNG dimensions, byte size, SHA-256 hash, seed, model, and
+  finish metadata.
 - `kitchen-sink-image` is a registered image generation provider with aliases
-  `kitchen`, `kitchen-sink`, and `openclaw-kitchen-sink`.
+  `kitchen`, `kitchen-sink`, and `openclaw-kitchen-sink`; prompts containing
+  `rate limit`, `timeout`, or `fail` exercise deterministic provider error
+  paths.
 - `kitchen-sink-media` describes images with deterministic fixture text.
 - `kitchen-sink-search` and `kitchen-sink-fetch` provide credential-free web
-  tool fixtures.
+  tool fixtures with realistic status codes, request ids, result metadata,
+  redirects, headers, cache metadata, links, and markdown content.
 - `kitchen-sink-channel` is a credential-free channel fixture that can resolve
-  local accounts, route outbound sessions, and deliver deterministic text/media
-  records.
+  local ready/disabled/misconfigured accounts, route outbound sessions, and
+  deliver deterministic text/media records.
 - `kitchen-sink-llm` exposes a deterministic text-provider catalog row,
   provider-owned stream function, and prompt guidance so live LLM providers can
-  discover the Kitchen Sink routes.
+  discover the Kitchen Sink routes; responses describe which real plugin
+  surface would handle image, search, fetch, and failure prompts.
 - generated hooks classify Kitchen Sink prompts, tool calls, and provider
   selections into shared scenario ids such as `image.generate`, `web.search`,
   and `text.reply`.

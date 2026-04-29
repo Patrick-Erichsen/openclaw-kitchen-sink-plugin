@@ -31,6 +31,7 @@ const requiredFiles = [
   "openclaw.plugin.json",
   "plugin-inspector.config.json",
   "src/index.js",
+  "src/assets/kitchen_sink_office.png",
   "src/kitchen-runtime.js",
   "src/scenarios.js",
   "src/setup.js",

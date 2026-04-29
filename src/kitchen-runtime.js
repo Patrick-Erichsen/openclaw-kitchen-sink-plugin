@@ -181,10 +181,10 @@ function buildKitchenChannel() {
     config: {
       listAccountIds: () => [CHANNEL_ACCOUNT_ID],
       defaultAccountId: () => CHANNEL_ACCOUNT_ID,
-      resolveAccount: (_cfg, accountId) => kitchenChannelAccount(accountId || CHANNEL_ACCOUNT_ID),
-      isEnabled: () => true,
-      isConfigured: () => true,
-      describeAccount: (account) => kitchenChannelAccount(account.accountId),
+      resolveAccount: (cfg, accountId) => kitchenChannelAccount(accountId || CHANNEL_ACCOUNT_ID, cfg),
+      isEnabled: (cfg) => cfg?.disabled !== true,
+      isConfigured: (cfg) => cfg?.configured !== false,
+      describeAccount: (account) => kitchenChannelAccount(account.accountId, account),
       resolveDefaultTo: () => "kitchen",
     },
     status: {
@@ -265,17 +265,28 @@ function buildKitchenImageProvider(runtime) {
         scenario: "image.generate",
         prompt: req?.prompt,
         route: "provider:image",
+        model: req?.model,
       });
+      if (result.error) {
+        throw kitchenProviderError(result);
+      }
       return {
         images: [stripDataUrl(result.image)],
         model: req?.model || DEFAULT_IMAGE_MODEL,
         metadata: {
           kitchenSink: true,
           job: result.job,
+          asset: result.image.metadata,
           provider: IMAGE_PROVIDER_ID,
           pluginId: PLUGIN_ID,
           scenarioId: result.scenarioId,
           route: result.route,
+          request: {
+            prompt: req?.prompt,
+            size: req?.size,
+            aspectRatio: req?.aspectRatio,
+            count: req?.count || 1,
+          },
         },
       };
     },
@@ -313,7 +324,14 @@ function buildKitchenTextProvider() {
         hint: "Deterministic local fixture provider.",
         kind: "custom",
         run: async () => ({
-          profiles: [],
+          profiles: [
+            {
+              id: "kitchen-sink-local",
+              label: "Kitchen Sink Local",
+              configured: true,
+              source: "fixture",
+            },
+          ],
           defaultModel: `${TEXT_PROVIDER_ID}/${DEFAULT_TEXT_MODEL}`,
           notes: ["Kitchen Sink LLM is deterministic and does not call a network service."],
         }),
@@ -536,6 +554,24 @@ function hashTask(input) {
 
 function pluginConfigPath() {
   return `plugins.${PLUGIN_ID}`;
+}
+
+function kitchenProviderError(result) {
+  const error = new Error(result.error.message);
+  error.name = "KitchenSinkProviderError";
+  error.code = result.error.code;
+  error.statusCode = result.error.statusCode;
+  error.retryable = result.error.retryable;
+  error.retryAfterMs = result.error.retryAfterMs;
+  error.metadata = {
+    kitchenSink: true,
+    job: result.job,
+    pluginId: PLUGIN_ID,
+    provider: IMAGE_PROVIDER_ID,
+    scenarioId: result.scenarioId,
+    route: result.route,
+  };
+  return error;
 }
 
 function optionalRegister(api, method, register) {

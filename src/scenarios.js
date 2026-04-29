@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
 export const PLUGIN_ID = "openclaw-kitchen-sink-fixture";
@@ -16,6 +17,21 @@ const KITCHEN_SINK_OFFICE_IMAGE_FILE = "kitchen_sink_office.png";
 const KITCHEN_SINK_OFFICE_IMAGE = readFileSync(
   new URL(`./assets/${KITCHEN_SINK_OFFICE_IMAGE_FILE}`, import.meta.url),
 );
+const KITCHEN_SINK_OFFICE_SHA256 = sha256Hex(KITCHEN_SINK_OFFICE_IMAGE);
+const KITCHEN_IMAGE_FIXTURES = [
+  {
+    id: "office-lobby-sink",
+    label: "Kitchen Sink Office",
+    assetName: KITCHEN_SINK_OFFICE_IMAGE_FILE,
+    buffer: KITCHEN_SINK_OFFICE_IMAGE,
+    sha256: KITCHEN_SINK_OFFICE_SHA256,
+    mimeType: "image/png",
+    width: 1024,
+    height: 1024,
+    description: "office lobby scene with a lobster-costumed figure holding a real sink",
+    source: "bundled-real-image",
+  },
+];
 
 export function createKitchenScenarioRuntime(options = {}) {
   const runtime = {
@@ -48,10 +64,43 @@ export async function runKitchenScenario(runtime, request = {}) {
   const scenario = normalizeScenario(request.scenario);
   if (scenario === "image.generate") {
     const prompt = normalizePrompt(request.prompt, "a kitchen sink fixture image");
-    const job = createKitchenJob("image", prompt, runtime.now(), runtime.delayMs, scenario, request.route);
+    const queuedJob = createKitchenJob("image", prompt, runtime.now(), runtime.delayMs, scenario, request.route);
+    const runningJob = transitionKitchenJob(queuedJob, "running", runtime.now(), {
+      progressPercent: 50,
+      progressSummary: "Kitchen Sink image provider accepted the request.",
+    });
     await runtime.sleep(runtime.delayMs);
-    const completedJob = { ...job, status: "completed", completedAt: runtime.now().toISOString() };
-    const image = createKitchenSinkImageAsset({ prompt, jobId: job.id, scenario });
+    const failure = classifyKitchenFailure(prompt);
+    if (failure) {
+      return {
+        scenarioId: scenario,
+        route: request.route || "provider:image",
+        job: transitionKitchenJob(runningJob, "failed", runtime.now(), {
+          error: failure,
+          progressPercent: 100,
+          progressSummary: failure.message,
+        }),
+        error: failure,
+      };
+    }
+    const image = createKitchenSinkImageAsset({
+      prompt,
+      jobId: queuedJob.id,
+      scenario,
+      model: request.model || DEFAULT_IMAGE_MODEL,
+    });
+    const completedAt = runtime.now();
+    const completedJob = transitionKitchenJob(runningJob, "completed", completedAt, {
+      completedAt: completedAt.toISOString(),
+      progressPercent: 100,
+      progressSummary: `Returned bundled ${image.metadata.assetName}.`,
+      output: {
+        fileName: image.fileName,
+        mimeType: image.mimeType,
+        sizeBytes: image.metadata.sizeBytes,
+        contentHash: image.metadata.contentHash,
+      },
+    });
     return {
       scenarioId: scenario,
       route: request.route || "provider:image",
@@ -88,27 +137,44 @@ export async function runKitchenScenario(runtime, request = {}) {
 
   const prompt = normalizePrompt(request.prompt, "explain the kitchen sink fixture");
   const job = createKitchenJob("text", prompt, runtime.now(), 0, scenario, request.route);
+  const text = kitchenTextResponse(prompt);
+  const completedAt = runtime.now();
   return {
     scenarioId: "text.reply",
     route: request.route || "provider:text",
-    job: { ...job, status: "completed", completedAt: runtime.now().toISOString() },
-    text: kitchenTextResponse(prompt),
+    job: transitionKitchenJob(job, "completed", completedAt, {
+      completedAt: completedAt.toISOString(),
+      progressPercent: 100,
+      progressSummary: "Kitchen Sink text provider produced a deterministic reply.",
+    }),
+    text,
+    usage: estimateUsage(prompt, text),
   };
 }
 
-export function createKitchenSinkImageAsset({ prompt, jobId, scenario = "image.generate" }) {
-  const buffer = Buffer.from(KITCHEN_SINK_OFFICE_IMAGE);
+export function createKitchenSinkImageAsset({ prompt, jobId, scenario = "image.generate", model = DEFAULT_IMAGE_MODEL }) {
+  const fixture = selectKitchenImageFixture(prompt);
+  const buffer = Buffer.from(fixture.buffer);
+  const seed = stableHash(`${jobId}:${prompt}:${fixture.id}`);
   return {
     buffer,
-    mimeType: "image/png",
+    mimeType: fixture.mimeType,
     fileName: `${jobId}.png`,
-    dataUrl: `data:image/png;base64,${buffer.toString("base64")}`,
-    revisedPrompt: `Kitchen sink office fixture image for: ${prompt}`,
+    dataUrl: `data:${fixture.mimeType};base64,${buffer.toString("base64")}`,
+    revisedPrompt: `Kitchen Sink office image fixture: ${prompt}`,
     metadata: {
       kitchenSink: true,
-      assetName: KITCHEN_SINK_OFFICE_IMAGE_FILE,
-      width: 1024,
-      height: 1024,
+      assetId: fixture.id,
+      assetName: fixture.assetName,
+      source: fixture.source,
+      model,
+      width: fixture.width,
+      height: fixture.height,
+      sizeBytes: buffer.byteLength,
+      sha256: fixture.sha256,
+      contentHash: fixture.sha256.slice(0, 16),
+      seed,
+      finishReason: "success",
       pluginId: PLUGIN_ID,
       scenarioId: scenario,
       jobId,
@@ -126,6 +192,7 @@ export function kitchenPromptGuidance() {
     "Kitchen Sink fixture plugin:",
     "- Use the kitchen_sink_image_job tool when the user asks for a kitchen sink image without selecting an image provider.",
     "- Use provider kitchen-sink-image for image generation when the configured image provider is Kitchen Sink.",
+    "- Image prompts containing rate limit, timeout, or fail trigger deterministic failure paths for retry/error handling.",
     "- Use kitchen_sink_search for deterministic search fixture queries.",
     "- Use kitchen_sink_text for deterministic text fixture responses.",
   ];
@@ -140,6 +207,8 @@ export function createKitchenChannelDelivery({ kind = "text", text = "", to = "k
     conversationId: normalizedTo,
     channelId: normalizedTo,
     timestamp: Date.now(),
+    deliveryStatus: "sent",
+    transport: "kitchen-sink-local",
     meta: {
       kitchenSink: true,
       pluginId: PLUGIN_ID,
@@ -149,17 +218,29 @@ export function createKitchenChannelDelivery({ kind = "text", text = "", to = "k
   };
 }
 
-export function kitchenChannelAccount(accountId = CHANNEL_ACCOUNT_ID) {
+export function kitchenChannelAccount(accountId = CHANNEL_ACCOUNT_ID, config = {}) {
+  const normalizedAccountId = accountId || CHANNEL_ACCOUNT_ID;
+  const enabled = normalizedAccountId !== "disabled" && config?.disabled !== true;
+  const configured = normalizedAccountId !== "missing" && config?.configured !== false;
+  const ok = enabled && configured;
   return {
-    accountId: accountId || CHANNEL_ACCOUNT_ID,
-    name: "Kitchen Sink Local",
-    enabled: true,
-    configured: true,
-    statusState: "fixture",
-    linked: true,
-    running: true,
-    connected: true,
+    accountId: normalizedAccountId,
+    name: normalizedAccountId === CHANNEL_ACCOUNT_ID ? "Kitchen Sink Local" : `Kitchen Sink ${normalizedAccountId}`,
+    enabled,
+    configured,
+    statusState: ok ? "ready" : enabled ? "needs_setup" : "disabled",
+    linked: configured,
+    running: ok,
+    connected: ok,
     mode: "local",
+    health: {
+      ok,
+      checkedAt: "2026-04-28T00:00:00.000Z",
+      message: ok
+        ? "Kitchen Sink local fixture account is ready."
+        : "Kitchen Sink local fixture account is intentionally unavailable.",
+    },
+    capabilities: ["text", "media", "threads", "dry-run"],
   };
 }
 
@@ -202,32 +283,88 @@ export async function runKitchenImageTool(runtime, input) {
     prompt: readPrompt(input),
     route: "tool:kitchen_sink_image_job",
   });
+  if (result.error) {
+    return {
+      ...result,
+      ok: false,
+    };
+  }
   return {
     ...result,
+    ok: true,
     mediaUrl: result.image.dataUrl,
   };
 }
 
 export async function runKitchenSearch(query) {
   const normalized = normalizePrompt(query, "kitchen sink");
+  const requestId = `ks_search_${stableHash(normalized).slice(0, 10)}`;
+  const failure = classifyKitchenFailure(normalized);
+  if (failure) {
+    return {
+      provider: WEB_SEARCH_PROVIDER_ID,
+      requestId,
+      query: normalized,
+      ok: false,
+      statusCode: failure.statusCode,
+      latencyMs: 12,
+      error: failure,
+      results: [],
+    };
+  }
+  if (/\b(empty|no results|zero)\b/i.test(normalized)) {
+    return {
+      provider: WEB_SEARCH_PROVIDER_ID,
+      requestId,
+      query: normalized,
+      ok: true,
+      statusCode: 200,
+      latencyMs: 18,
+      results: [],
+      answer: "No Kitchen Sink fixture results matched the deterministic empty-result query.",
+    };
+  }
   return {
     provider: WEB_SEARCH_PROVIDER_ID,
+    requestId,
     query: normalized,
+    ok: true,
+    statusCode: 200,
+    latencyMs: 24,
+    answer: `Kitchen Sink found fixture routes for "${normalized}".`,
     results: [
       {
+        id: "ks-result-image-provider",
         title: "Kitchen Sink image fixture",
         url: "https://github.com/openclaw/kitchen-sink#image-fixture",
+        displayUrl: "github.com/openclaw/kitchen-sink#image-fixture",
         snippet: `Deterministic image job route for "${normalized}".`,
+        source: "kitchen-sink-docs",
+        score: 0.98,
+        faviconUrl: "https://github.githubassets.com/favicons/favicon.svg",
+        metadata: { route: "provider:image", provider: IMAGE_PROVIDER_ID },
       },
       {
+        id: "ks-result-dry-command",
         title: "Kitchen Sink dry command route",
         url: "https://github.com/openclaw/kitchen-sink#dry-command-route",
+        displayUrl: "github.com/openclaw/kitchen-sink#dry-command-route",
         snippet: "The kitchen prefix works without live LLM credentials.",
+        source: "kitchen-sink-docs",
+        score: 0.91,
+        faviconUrl: "https://github.githubassets.com/favicons/favicon.svg",
+        metadata: { route: "prefix:kitchen", provider: "command" },
       },
       {
+        id: "ks-result-provider-route",
         title: "Kitchen Sink provider route",
         url: "https://github.com/openclaw/kitchen-sink#provider-route",
+        displayUrl: "github.com/openclaw/kitchen-sink#provider-route",
         snippet: "The image, media, text, fetch, and search providers are registered by the plugin.",
+        source: "kitchen-sink-docs",
+        score: 0.87,
+        faviconUrl: "https://github.githubassets.com/favicons/favicon.svg",
+        metadata: { route: "provider:*", provider: PLUGIN_ID },
       },
     ],
   };
@@ -235,25 +372,73 @@ export async function runKitchenSearch(query) {
 
 export async function runKitchenFetch(url) {
   const target = normalizePrompt(url, "kitchen://fixture/readme");
+  const failure = classifyKitchenFailure(target);
+  const finalUrl = /\bredirect\b/i.test(target) ? "kitchen://fixture/readme" : target;
+  const missing = /\b(404|missing|not found)\b/i.test(target);
+  const statusCode = failure?.statusCode || (missing ? 404 : 200);
+  const ok = statusCode >= 200 && statusCode < 400;
+  const title = failure
+    ? "Kitchen Sink fixture error"
+    : missing
+      ? "Kitchen Sink fixture not found"
+      : "Kitchen Sink fixture document";
+  const content = ok
+    ? `Kitchen Sink fetched "${finalUrl}". This deterministic document proves plugin web-fetch routing without network access.`
+    : `Kitchen Sink could not fetch "${target}" in the deterministic fixture corpus.`;
   return {
     provider: WEB_FETCH_PROVIDER_ID,
+    requestId: `ks_fetch_${stableHash(target).slice(0, 10)}`,
+    ok,
+    statusCode,
     url: target,
-    title: "Kitchen Sink fixture document",
-    content: `Kitchen Sink fetched "${target}". This deterministic document proves plugin web-fetch routing without network access.`,
+    finalUrl,
+    title,
+    contentType: "text/markdown; charset=utf-8",
+    headers: {
+      "cache-control": "max-age=3600",
+      "content-type": "text/markdown; charset=utf-8",
+      "x-kitchen-sink-fixture": "true",
+    },
+    redirects: finalUrl === target ? [] : [{ statusCode: 302, from: target, to: finalUrl }],
+    cache: { status: "HIT", maxAgeSeconds: 3600 },
+    links: [
+      { href: "kitchen://fixture/image-provider", text: "Image provider fixture" },
+      { href: "kitchen://fixture/search", text: "Search fixture" },
+    ],
+    markdown: `# ${title}\n\n${content}\n`,
+    content,
+    ...(ok ? {} : { error: failure || { code: "not_found", message: "Fixture document was not found.", retryable: false } }),
   };
 }
 
 export function kitchenImageReply(result) {
+  if (result.error) {
+    return {
+      text: `kitchen image job ${result.job.id} failed: ${result.error.message}`,
+      presentation: {
+        title: "Kitchen Sink Image Failed",
+        tone: "danger",
+        blocks: [
+          { type: "text", text: `job: ${result.job.id}` },
+          { type: "context", text: `code=${result.error.code} retryable=${String(result.error.retryable)}` },
+        ],
+      },
+      channelData: {
+        kitchenSink: result,
+      },
+    };
+  }
   return {
     text:
       `kitchen image job ${result.job.id} completed after ${Math.round(result.job.delayMs / 1000)}s. ` +
-      `provider=${IMAGE_PROVIDER_ID} model=${DEFAULT_IMAGE_MODEL}`,
+      `provider=${IMAGE_PROVIDER_ID} model=${result.image.metadata.model} asset=${result.image.metadata.assetName}`,
     mediaUrl: result.image.dataUrl,
     presentation: {
       title: "Kitchen Sink Image",
       tone: "success",
       blocks: [
         { type: "text", text: `job: ${result.job.id}` },
+        { type: "text", text: `asset: ${result.image.metadata.assetName}` },
         { type: "context", text: result.image.revisedPrompt },
       ],
     },
@@ -289,14 +474,15 @@ export function kitchenTextModelDefinition() {
 export function createKitchenTextStream(model, context) {
   const stream = createAssistantMessageEventStream();
   queueMicrotask(() => {
-    const text = kitchenTextResponse(extractLastUserPrompt(context));
+    const prompt = extractLastUserPrompt(context);
+    const text = kitchenTextResponse(prompt);
     const message = {
       role: "assistant",
       content: [{ type: "text", text }],
       api: model?.api || "kitchen-sink",
       provider: TEXT_PROVIDER_ID,
       model: model?.id || DEFAULT_TEXT_MODEL,
-      usage: zeroUsage(),
+      usage: estimateUsage(prompt, text),
       stopReason: "stop",
       timestamp: Date.now(),
     };
@@ -311,10 +497,32 @@ export function createKitchenTextStream(model, context) {
 }
 
 export function kitchenTextResponse(prompt) {
+  const normalized = normalizePrompt(prompt, "kitchen sink text inference");
+  if (/\b(image|picture|draw|generate)\b/i.test(normalized)) {
+    return [
+      "Kitchen Sink text fixture:",
+      `prompt="${normalized}"`,
+      `I would route this to ${IMAGE_PROVIDER_ID}/${DEFAULT_IMAGE_MODEL}, create a queued image job, wait for completion, then return the bundled kitchen_sink_office.png asset with PNG metadata.`,
+    ].join(" ");
+  }
+  if (/\b(search|find|lookup|web)\b/i.test(normalized)) {
+    return [
+      "Kitchen Sink text fixture:",
+      `prompt="${normalized}"`,
+      `I would call ${WEB_SEARCH_PROVIDER_ID} for ranked fixture results and ${WEB_FETCH_PROVIDER_ID} for deterministic document fetches.`,
+    ].join(" ");
+  }
+  if (/\b(rate limit|timeout|fail|error)\b/i.test(normalized)) {
+    return [
+      "Kitchen Sink text fixture:",
+      `prompt="${normalized}"`,
+      "Failure fixtures are available: rate limit returns 429 with retry metadata, timeout returns 504, and fail returns a deterministic provider error.",
+    ].join(" ");
+  }
   return [
-    "kitchen sink text fixture:",
-    `prompt="${prompt}"`,
-    "routes: direct prefix, registered tools, image provider, media understanding, web search, web fetch, and text provider catalog.",
+    "Kitchen Sink text fixture:",
+    `prompt="${normalized}"`,
+    "Available realistic surfaces: direct prefix, registered tools, image provider lifecycle, media understanding, web search, web fetch, channel health, hooks, detached tasks, and text provider catalog.",
   ].join(" ");
 }
 
@@ -352,6 +560,12 @@ export function stripDataUrl(image) {
 }
 
 export function renderSearchText(result) {
+  if (result.error) {
+    return `Kitchen Sink search failed: ${result.error.message}`;
+  }
+  if (result.results.length === 0) {
+    return result.answer || "Kitchen Sink search returned no results.";
+  }
   return result.results.map((entry, index) => `${index + 1}. ${entry.title} - ${entry.snippet}`).join("\n");
 }
 
@@ -408,16 +622,38 @@ export function observeKitchenHook(name, event, context) {
 
 function createKitchenJob(kind, prompt, date, delayMs, scenarioId, route) {
   const id = `ks_${kind}_${stableHash(`${kind}:${prompt}`).slice(0, 10)}`;
+  const createdAt = date.toISOString();
   return {
     id,
     kind,
-    status: "running",
+    status: "queued",
     prompt,
     delayMs,
-    createdAt: date.toISOString(),
+    createdAt,
+    queuedAt: createdAt,
+    lastEventAt: createdAt,
+    progressPercent: 0,
+    progressSummary: "Kitchen Sink job queued.",
     pluginId: PLUGIN_ID,
     scenarioId,
     route: route || defaultRouteForScenario(scenarioId),
+    statusUrl: `kitchen://jobs/${id}`,
+    timeline: [{ status: "queued", at: createdAt, summary: "Kitchen Sink job queued." }],
+  };
+}
+
+function transitionKitchenJob(job, status, date, patch = {}) {
+  const at = date.toISOString();
+  const summary = patch.progressSummary || `Kitchen Sink job ${status}.`;
+  return {
+    ...job,
+    ...patch,
+    status,
+    startedAt: status === "running" ? at : job.startedAt,
+    completedAt: status === "completed" ? patch.completedAt || at : job.completedAt,
+    failedAt: status === "failed" ? at : job.failedAt,
+    lastEventAt: at,
+    timeline: [...(job.timeline || []), { status, at, summary }],
   };
 }
 
@@ -503,13 +739,15 @@ function extractLastUserPrompt(context) {
   return "kitchen sink text inference";
 }
 
-function zeroUsage() {
+function estimateUsage(prompt = "", text = "") {
+  const input = estimateTokens(prompt);
+  const output = estimateTokens(text);
   return {
-    input: 0,
-    output: 0,
+    input,
+    output,
     cacheRead: 0,
     cacheWrite: 0,
-    totalTokens: 0,
+    totalTokens: input + output,
     cost: {
       input: 0,
       output: 0,
@@ -518,6 +756,49 @@ function zeroUsage() {
       total: 0,
     },
   };
+}
+
+function estimateTokens(text) {
+  return Math.max(1, Math.ceil(String(text).trim().split(/\s+/).filter(Boolean).length * 1.35));
+}
+
+function classifyKitchenFailure(prompt) {
+  const text = String(prompt ?? "").toLowerCase();
+  if (/\brate[ -]?limit|429|too many requests\b/.test(text)) {
+    return {
+      code: "rate_limited",
+      statusCode: 429,
+      message: "Kitchen Sink fixture simulated a provider rate limit.",
+      retryable: true,
+      retryAfterMs: 30_000,
+    };
+  }
+  if (/\btimeout|timed out|504\b/.test(text)) {
+    return {
+      code: "timeout",
+      statusCode: 504,
+      message: "Kitchen Sink fixture simulated an upstream timeout.",
+      retryable: true,
+      retryAfterMs: 5_000,
+    };
+  }
+  if (/\bfail|error|500\b/.test(text)) {
+    return {
+      code: "fixture_failed",
+      statusCode: 500,
+      message: "Kitchen Sink fixture simulated a provider failure.",
+      retryable: false,
+    };
+  }
+  return undefined;
+}
+
+function selectKitchenImageFixture(_prompt) {
+  return KITCHEN_IMAGE_FIXTURES[0];
+}
+
+function sha256Hex(buffer) {
+  return createHash("sha256").update(buffer).digest("hex");
 }
 
 function readString(input, key) {

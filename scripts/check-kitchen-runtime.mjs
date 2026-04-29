@@ -53,6 +53,9 @@ const channel = findRegistration("registerChannel", "kitchen-sink-channel");
 const channelAccount = channel.config.resolveAccount({}, "local");
 assert.equal(channelAccount.configured, true);
 assert.equal(channelAccount.enabled, true);
+assert.equal(channelAccount.statusState, "ready");
+assert.equal(channelAccount.health.ok, true);
+assert.equal(channel.config.resolveAccount({ disabled: true }, "disabled").statusState, "disabled");
 const channelDelivery = await channel.outbound.sendText({
   cfg: {},
   to: "kitchen demo",
@@ -60,6 +63,8 @@ const channelDelivery = await channel.outbound.sendText({
 });
 assert.equal(channelDelivery.channel, "kitchen-sink-channel");
 assert.equal(channelDelivery.conversationId, "kitchen-demo");
+assert.equal(channelDelivery.deliveryStatus, "sent");
+assert.equal(channelDelivery.transport, "kitchen-sink-local");
 assert.equal(channelDelivery.meta.scenarioId, "image.generate");
 const channelRoute = await channel.messaging.resolveOutboundSessionRoute({
   cfg: {},
@@ -92,7 +97,7 @@ const imageProvider = findRegistration("registerImageGenerationProvider", "kitch
 assert.equal(imageProvider.defaultModel, "kitchen-sink-image-v1");
 
 const sleeps = [];
-const { PLUGIN_ID, runKitchenScenario } = await import("../src/scenarios.js");
+const { PLUGIN_ID, runKitchenImageTool, runKitchenScenario } = await import("../src/scenarios.js");
 const { createKitchenSinkRuntime } = await import("../src/kitchen-runtime.js");
 const fastRuntime = createKitchenSinkRuntime({
   delayMs: 10_000,
@@ -107,10 +112,24 @@ assert.equal(imageResult.scenarioId, "image.generate");
 assert.equal(imageResult.route, "provider:image");
 assert.equal(imageResult.job.status, "completed");
 assert.equal(imageResult.job.pluginId, "openclaw-kitchen-sink-fixture");
+assert.equal(imageResult.job.progressPercent, 100);
+assert.equal(imageResult.job.statusUrl, `kitchen://jobs/${imageResult.job.id}`);
+assert.deepEqual(
+  imageResult.job.timeline.map((entry) => entry.status),
+  ["queued", "running", "completed"],
+);
+assert.equal(imageResult.job.output.contentHash, "e126064123bb13d8");
 assert.equal(imageResult.image.metadata.pluginId, "openclaw-kitchen-sink-fixture");
+assert.equal(imageResult.image.metadata.assetId, "office-lobby-sink");
 assert.equal(imageResult.image.metadata.assetName, "kitchen_sink_office.png");
+assert.equal(imageResult.image.metadata.source, "bundled-real-image");
+assert.equal(imageResult.image.metadata.model, "kitchen-sink-image-v1");
 assert.equal(imageResult.image.metadata.width, 1024);
 assert.equal(imageResult.image.metadata.height, 1024);
+assert.equal(imageResult.image.metadata.sizeBytes, 948291);
+assert.equal(imageResult.image.metadata.sha256, "e126064123bb13d8ee01a22c204e079bc22397c103ed1c3a191c60d5ae3319aa");
+assert.equal(imageResult.image.metadata.contentHash, "e126064123bb13d8");
+assert.equal(imageResult.image.metadata.finishReason, "success");
 assert.equal(imageResult.image.mimeType, "image/png");
 assert.equal(imageResult.image.fileName, `${imageResult.job.id}.png`);
 assert.deepEqual(
@@ -119,14 +138,35 @@ assert.deepEqual(
 );
 assert.ok(imageResult.image.dataUrl.startsWith("data:image/png;base64,"));
 
+const failedImageResult = await fastRuntime.runImageJob({ prompt: "kitchen rate limit image" });
+assert.deepEqual(sleeps, [10_000, 10_000]);
+assert.equal(failedImageResult.job.status, "failed");
+assert.deepEqual(
+  failedImageResult.job.timeline.map((entry) => entry.status),
+  ["queued", "running", "failed"],
+);
+assert.equal(failedImageResult.error.code, "rate_limited");
+assert.equal(failedImageResult.error.statusCode, 429);
+assert.equal(failedImageResult.error.retryAfterMs, 30_000);
+
+const failedToolResult = await runKitchenImageTool(fastRuntime, { prompt: "kitchen timeout image" });
+assert.equal(failedToolResult.ok, false);
+assert.equal(failedToolResult.error.code, "timeout");
+assert.equal(failedToolResult.mediaUrl, undefined);
+
 const scenarioResult = await runKitchenScenario(fastRuntime, {
   scenario: "web.fetch",
-  url: "kitchen://fixture/readme",
+  url: "kitchen://fixture/redirect",
   route: "test:scenario-engine",
 });
 assert.equal(PLUGIN_ID, "openclaw-kitchen-sink-fixture");
 assert.equal(scenarioResult.scenarioId, "web.fetch");
 assert.equal(scenarioResult.route, "test:scenario-engine");
+assert.equal(scenarioResult.ok, true);
+assert.equal(scenarioResult.statusCode, 200);
+assert.equal(scenarioResult.finalUrl, "kitchen://fixture/readme");
+assert.equal(scenarioResult.redirects.length, 1);
+assert.equal(scenarioResult.headers["x-kitchen-sink-fixture"], "true");
 assert.match(scenarioResult.content, /deterministic document/);
 
 const mediaProvider = findRegistration("registerMediaUnderstandingProvider", "kitchen-sink-media");
@@ -141,11 +181,20 @@ const searchTool = searchProvider.createTool({});
 const searchResult = await searchTool.execute({ query: "kitchen sink image provider" });
 assert.equal(searchResult.results.length, 3);
 assert.equal(searchResult.provider, "kitchen-sink-search");
+assert.equal(searchResult.ok, true);
+assert.equal(searchResult.statusCode, 200);
+assert.equal(searchResult.results[0].id, "ks-result-image-provider");
+assert.equal(searchResult.results[0].metadata.provider, "kitchen-sink-image");
+const emptySearchResult = await searchTool.execute({ query: "kitchen empty results" });
+assert.equal(emptySearchResult.ok, true);
+assert.equal(emptySearchResult.results.length, 0);
 
 const textProvider = findRegistration("registerProvider", "kitchen-sink-llm");
 const catalog = await textProvider.staticCatalog.run({ config: {}, env: {} });
 assert.equal(catalog.provider.models[0].id, "kitchen-sink-text-v1");
 assert.equal(catalog.provider.models[0].api, "kitchen-sink");
+const authResult = await textProvider.auth[0].run();
+assert.equal(authResult.profiles[0].id, "kitchen-sink-local");
 const streamFn = textProvider.createStreamFn({});
 const stream = streamFn(catalog.provider.models[0], {
   messages: [{ role: "user", content: "kitchen explain text inference", timestamp: 0 }],
@@ -157,6 +206,7 @@ for await (const event of stream) {
 const streamMessage = await stream.result();
 assert.deepEqual(streamEvents, ["start", "text_start", "text_delta", "text_end", "done"]);
 assert.match(streamMessage.content[0].text, /kitchen explain text inference/);
+assert.ok(streamMessage.usage.totalTokens > 0);
 
 const imageTool = findRegistration("registerTool", "kitchen_sink_image_job");
 assert.equal(typeof imageTool.execute, "function");
