@@ -387,7 +387,87 @@ assert.equal(cliRegistration[1].descriptors[0].name, "kitchen-sink");
 const imageTool = findRegistration("registerTool", "kitchen_sink_image_job");
 assert.equal(typeof imageTool.execute, "function");
 
+const { KITCHEN_SINK_EXPECTED_DIAGNOSTICS } = await import("../src/personality.js");
+assert.deepEqual(KITCHEN_SINK_EXPECTED_DIAGNOSTICS.conformance, []);
+assert.ok(
+  KITCHEN_SINK_EXPECTED_DIAGNOSTICS.adversarial.includes(
+    'channel "kitchen-sink-channel-probe" registration missing required config helpers',
+  ),
+);
+assert.ok(
+  KITCHEN_SINK_EXPECTED_DIAGNOSTICS.full.includes(
+    "only bundled plugins can register agent tool result middleware",
+  ),
+);
+
+const conformance = capturePluginRegistration({ personality: "conformance" });
+assert.ok(
+  conformance.registerCommand?.some(([command]) => command.name === "kitchen"),
+  "conformance registers usable commands",
+);
+assert.ok(
+  conformance.registerChannel?.some(([channel]) => channel.id === "kitchen-sink-channel"),
+  "conformance registers the usable channel",
+);
+assert.equal(conformance.registerAgentToolResultMiddleware, undefined);
+assert.equal(
+  conformance.registerChannel?.some(([channel]) => channel.id === "kitchen-sink-channel-probe"),
+  false,
+);
+
+const adversarial = capturePluginRegistration({ personality: "adversarial" });
+assert.equal(
+  adversarial.registerCommand?.some(([command]) => command.name === "kitchen"),
+  false,
+);
+assert.equal(
+  adversarial.registerChannel?.some(([channel]) => channel.id === "kitchen-sink-channel"),
+  false,
+);
+assert.ok(
+  adversarial.registerChannel?.some(([channel]) => channel.id === "kitchen-sink-channel-probe"),
+  "adversarial registers generated invalid channel probe",
+);
+assert.ok(
+  adversarial.registerCompactionProvider?.some(([provider]) => provider.id === "kitchen-sink-compaction-provider"),
+  "adversarial registers generated invalid compaction probe",
+);
+
 console.log("Kitchen runtime OK");
+
+function capturePluginRegistration(config) {
+  const captured = {};
+  const captureApi = new Proxy(
+    {
+      id: "openclaw-kitchen-sink-fixture",
+      registrationMode: "full",
+      config,
+      logger: console,
+    },
+    {
+      get(target, property) {
+        if (property in target) {
+          return target[property];
+        }
+        if (property === "on") {
+          return (...args) => {
+            captured.on ??= [];
+            captured.on.push(args);
+          };
+        }
+        if (typeof property !== "string" || !property.startsWith("register")) {
+          return undefined;
+        }
+        return (...args) => {
+          captured[property] ??= [];
+          captured[property].push(args);
+        };
+      },
+    },
+  );
+  plugin.register(captureApi);
+  return captured;
+}
 
 function findRegistration(method, id) {
   const entry = registrations[method]?.map(([value]) => value).find((value) => value?.id === id);
