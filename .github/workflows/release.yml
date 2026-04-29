@@ -39,7 +39,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Setup npm
-        run: npm install -g npm@11.6.2
+        run: npm install -g npm@11.12.1
 
       - name: Validate release tag matches package version
         id: verify
@@ -135,7 +135,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
 
       - name: Setup npm
-        run: npm install -g npm@11.6.2
+        run: npm install -g npm@11.12.1
 
       - name: Download npm release artifact
         uses: actions/download-artifact@v8
@@ -143,19 +143,9 @@ jobs:
           name: npm-release-tarball
           path: ./release-artifacts
 
-      - name: Prepare trusted publishing auth
-        run: |
-          npm config delete //registry.npmjs.org/:_authToken || true
-
       - name: Publish to npm
         run: |
-          if [ "${{ github.event.repository.private }}" = "true" ]; then
-            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --access public --tag "${{ needs.validate.outputs.npm_tag }}"
-          else
-            npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --provenance --access public --tag "${{ needs.validate.outputs.npm_tag }}"
-          fi
-        env:
-          NODE_AUTH_TOKEN: ""
+          npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --access public --tag "${{ needs.validate.outputs.npm_tag }}"
 
   publish-clawhub:
     # Disabled until the kitchen-sink package exists in the ClawHub org/registry.
