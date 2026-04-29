@@ -65,7 +65,7 @@
     "openclaw": "2026.4.26"
   },
   "devDependencies": {
-    "@openclaw/plugin-inspector": "0.3.4"
+    "@openclaw/plugin-inspector": "0.3.5"
   },
   "engines": {
     "node": ">=22"
