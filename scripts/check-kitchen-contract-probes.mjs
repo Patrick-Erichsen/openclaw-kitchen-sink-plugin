@@ -3,32 +3,14 @@
 import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { plugin } from "../src/index.js";
+import {
+  capturePluginRegistration,
+  createHookFinder,
+  registrationSummary,
+} from "./lib/plugin-registration-harness.mjs";
 
-const registrations = {};
-const api = new Proxy(
-  {
-    id: "openclaw-kitchen-sink-fixture",
-    registrationMode: "full",
-    config: {},
-    logger: console,
-  },
-  {
-    get(target, property) {
-      if (property in target) {
-        return target[property];
-      }
-      if (property === "on") {
-        return (...args) => capture("on", args);
-      }
-      if (typeof property !== "string" || !property.startsWith("register")) {
-        return undefined;
-      }
-      return (...args) => capture(property, args);
-    },
-  },
-);
-
-plugin.register(api);
+const registrations = capturePluginRegistration(plugin);
+const findHook = createHookFinder(registrations);
 
 const beforeToolCall = findHook("before_tool_call");
 const llmInput = findHook("llm_input");
@@ -49,7 +31,7 @@ const probes = {
     end: await agentEnd(secretEvent("kitchen final answer"), secretContext()),
   },
   channel: await captureChannelProbe(),
-  runtimeRegistrations: registrationSummary(),
+  runtimeRegistrations: registrationSummary(registrations),
 };
 
 assert.equal(probes.beforeToolCall.allow.decision, "allow");
@@ -89,50 +71,6 @@ writeFileSync("reports/kitchen-contract-probes.md", renderMarkdown(probes));
 console.log(
   `Kitchen contract probes OK: ${Object.keys(probes.runtimeRegistrations).length} registration methods, before_tool_call allow/block/approval, conversation privacy, channel envelope`,
 );
-
-function capture(method, args) {
-  registrations[method] ??= [];
-  registrations[method].push(args);
-}
-
-function findHook(name) {
-  const entry = registrations.on?.find(([hookName]) => hookName === name);
-  assert.ok(entry, `hook ${name} registered`);
-  return entry[1];
-}
-
-function registrationSummary() {
-  return Object.fromEntries(
-    Object.entries(registrations)
-      .filter(([method]) => method !== "on")
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([method, entries]) => [
-        method,
-        {
-          count: entries.length,
-          ids: entries.map((args) => idForRegistration(method, args)).filter(Boolean).sort(),
-        },
-      ]),
-  );
-}
-
-function idForRegistration(method, args) {
-  const [value, second] = args;
-  if (method === "registerGatewayMethod" && typeof value === "string") {
-    return value;
-  }
-  if (method === "registerCli" && second?.descriptors?.length > 0) {
-    return second.descriptors.map((descriptor) => descriptor.name).join(", ");
-  }
-  if (value?.id || value?.name) {
-    return value.id || value.name;
-  }
-  if (typeof second === "string") {
-    return second;
-  }
-  const slug = method.slice("register".length).replace(/([a-z0-9])([A-Z])/g, "$1-$2").toLowerCase();
-  return `kitchen-sink-${slug}`;
-}
 
 async function captureChannelProbe() {
   const channel = registrations.registerChannel?.map(([value]) => value).find((value) => value.id === "kitchen-sink-channel");

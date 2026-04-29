@@ -2,38 +2,16 @@
 
 import assert from "node:assert/strict";
 import { plugin } from "../src/index.js";
+import {
+  capturePluginRegistration,
+  createHookFinder,
+  createRegistrationFinder,
+  fixedNow,
+} from "./lib/plugin-registration-harness.mjs";
 
-const registrations = {};
-const api = new Proxy(
-  {
-    id: "openclaw-kitchen-sink-fixture",
-    registrationMode: "full",
-    config: {},
-    logger: console,
-  },
-  {
-    get(target, property) {
-      if (property in target) {
-        return target[property];
-      }
-      if (property === "on") {
-        return (...args) => {
-          registrations.on ??= [];
-          registrations.on.push(args);
-        };
-      }
-      if (typeof property !== "string" || !property.startsWith("register")) {
-        return undefined;
-      }
-      return (...args) => {
-        registrations[property] ??= [];
-        registrations[property].push(args);
-      };
-    },
-  },
-);
-
-plugin.register(api);
+const registrations = capturePluginRegistration(plugin);
+const findRegistration = createRegistrationFinder(registrations);
+const findHook = createHookFinder(registrations);
 
 const commands = registrations.registerCommand?.map(([command]) => command) ?? [];
 assert.ok(commands.some((command) => command.name === "kitchen"), "registers kitchen command");
@@ -400,7 +378,7 @@ assert.ok(
   ),
 );
 
-const conformance = capturePluginRegistration({ personality: "conformance" });
+const conformance = capturePluginRegistration(plugin, { personality: "conformance" });
 assert.ok(
   conformance.registerCommand?.some(([command]) => command.name === "kitchen"),
   "conformance registers usable commands",
@@ -415,7 +393,7 @@ assert.equal(
   false,
 );
 
-const adversarial = capturePluginRegistration({ personality: "adversarial" });
+const adversarial = capturePluginRegistration(plugin, { personality: "adversarial" });
 assert.equal(
   adversarial.registerCommand?.some(([command]) => command.name === "kitchen"),
   false,
@@ -434,54 +412,3 @@ assert.ok(
 );
 
 console.log("Kitchen runtime OK");
-
-function capturePluginRegistration(config) {
-  const captured = {};
-  const captureApi = new Proxy(
-    {
-      id: "openclaw-kitchen-sink-fixture",
-      registrationMode: "full",
-      config,
-      logger: console,
-    },
-    {
-      get(target, property) {
-        if (property in target) {
-          return target[property];
-        }
-        if (property === "on") {
-          return (...args) => {
-            captured.on ??= [];
-            captured.on.push(args);
-          };
-        }
-        if (typeof property !== "string" || !property.startsWith("register")) {
-          return undefined;
-        }
-        return (...args) => {
-          captured[property] ??= [];
-          captured[property].push(args);
-        };
-      },
-    },
-  );
-  plugin.register(captureApi);
-  return captured;
-}
-
-function findRegistration(method, id) {
-  const entry = registrations[method]?.map(([value]) => value).find((value) => value?.id === id);
-  assert.ok(entry, `${method} ${id} registered`);
-  return entry;
-}
-
-function findHook(name) {
-  const entry = registrations.on?.find(([hookName]) => hookName === name);
-  assert.ok(entry, `hook ${name} registered`);
-  return entry[1];
-}
-
-function fixedNow() {
-  let tick = 0;
-  return () => new Date(Date.UTC(2026, 3, 28, 12, 0, tick++));
-}
