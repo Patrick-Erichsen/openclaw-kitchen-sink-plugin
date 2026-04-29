@@ -92,6 +92,8 @@ notes. Publishing that draft release runs the npm publish workflow. `0.0.x`
 verification releases publish under the `verification` npm dist-tag so they do
 not replace the stable `latest` tag.
 
-ClawHub publish wiring is present but intentionally not called from CI yet. The
-ClawHub org/package ownership for this fixture still needs to be set up before
-the dry-run or release publish jobs are enabled.
+Pull requests run a ClawHub package-publish dry run through the canonical
+`openclaw/clawhub` reusable workflow on `main`, so the fixture tests the current
+ClawHub publishing path instead of a vendored copy. Release publishing is wired
+the same way, but remains disabled until the ClawHub org/package ownership for
+this fixture is set up.
