@@ -44,6 +44,51 @@ const KITCHEN_IMAGE_FIXTURES = [
   },
 ];
 
+export const KITCHEN_HUMAN_SCENARIOS = Object.freeze([
+  {
+    id: "dry.prefix-image",
+    prompt: "kitchen generate an image of the office sink fixture",
+    mode: "dry",
+    route: "prefix:kitchen",
+    surfaces: ["command", "image-provider", "asset"],
+  },
+  {
+    id: "live.openai-text-kitchen-image",
+    prompt: "Generate an image with Kitchen Sink while OpenAI handles the text turn.",
+    mode: "live-llm-compatible",
+    route: "human:live-llm-image-provider",
+    surfaces: ["text-provider-guidance", "image-provider", "tool-routing"],
+  },
+  {
+    id: "search.fetch.summarize",
+    prompt: "Search for Kitchen Sink provider routing and fetch the fixture README.",
+    mode: "dry",
+    route: "human:search-fetch-summary",
+    surfaces: ["web-search", "web-fetch", "text-provider"],
+  },
+  {
+    id: "channel.prefix-image",
+    prompt: "kitchen generate an image in this channel",
+    mode: "dry",
+    route: "human:channel-prefix",
+    surfaces: ["channel", "interactive-handler", "image-provider"],
+  },
+  {
+    id: "hook.block-tool",
+    prompt: "kitchen block image generation until the operator reviews it",
+    mode: "dry",
+    route: "human:hook-block",
+    surfaces: ["before_tool_call", "terminal-block"],
+  },
+  {
+    id: "memory.compact-fixture",
+    prompt: "Remember the Kitchen Sink image job and compact this session.",
+    mode: "dry",
+    route: "human:memory-compaction",
+    surfaces: ["memory-embedding", "memory-corpus", "compaction"],
+  },
+]);
+
 export function createKitchenScenarioRuntime(options = {}) {
   const runtime = {
     delayMs: normalizeDelayMs(options.delayMs),
@@ -69,6 +114,100 @@ export function createKitchenScenarioRuntime(options = {}) {
   };
 
   return runtime;
+}
+
+export function listKitchenHumanScenarios() {
+  return KITCHEN_HUMAN_SCENARIOS.map((scenario) => ({ ...scenario, surfaces: [...scenario.surfaces] }));
+}
+
+export async function runKitchenHumanScenario(runtime, idOrPrompt) {
+  const scenario = resolveKitchenHumanScenario(idOrPrompt);
+  if (scenario.id === "dry.prefix-image") {
+    return {
+      ...scenario,
+      result: await runKitchenCommand(runtime, scenario.prompt.replace(/^kitchen\s+/i, "")),
+    };
+  }
+  if (scenario.id === "live.openai-text-kitchen-image") {
+    return {
+      ...scenario,
+      guidance: kitchenPromptGuidance(),
+      result: await runtime.runScenario({
+        scenario: "image.generate",
+        prompt: scenario.prompt,
+        route: scenario.route,
+      }),
+    };
+  }
+  if (scenario.id === "search.fetch.summarize") {
+    const search = await runtime.runScenario({
+      scenario: "web.search",
+      prompt: scenario.prompt,
+      route: scenario.route,
+    });
+    const fetch = await runtime.runScenario({
+      scenario: "web.fetch",
+      url: "kitchen://fixture/readme",
+      route: scenario.route,
+    });
+    return {
+      ...scenario,
+      result: {
+        search,
+        fetch,
+        summary: kitchenTextResponse(`${search.answer} ${fetch.title}`),
+      },
+    };
+  }
+  if (scenario.id === "channel.prefix-image") {
+    const command = await runKitchenCommand(runtime, scenario.prompt.replace(/^kitchen\s+/i, ""));
+    return {
+      ...scenario,
+      result: {
+        command,
+        delivery: createKitchenChannelDelivery({
+          kind: "media",
+          text: scenario.prompt,
+          to: "kitchen demo",
+        }),
+      },
+    };
+  }
+  if (scenario.id === "hook.block-tool") {
+    return {
+      ...scenario,
+      result: observeKitchenHook(
+        "before_tool_call",
+        { toolId: "kitchen_sink_image_job", args: { prompt: scenario.prompt } },
+        { providerId: IMAGE_PROVIDER_ID },
+      ),
+    };
+  }
+  if (scenario.id === "memory.compact-fixture") {
+    const memory = createKitchenMemorySearch(scenario.prompt);
+    const compaction = createKitchenCompaction({
+      messages: [
+        { role: "user", content: scenario.prompt },
+        { role: "assistant", content: "Kitchen Sink image job ks_image_1f8a5a98 completed." },
+      ],
+    });
+    return {
+      ...scenario,
+      result: {
+        embedding: createKitchenEmbedding(scenario.prompt),
+        memory,
+        compaction,
+      },
+    };
+  }
+  return {
+    ...scenario,
+    result: await runtime.runScenario({
+      scenario: "text.reply",
+      prompt: scenario.prompt,
+      route: scenario.route,
+    }),
+  };
 }
 
 export async function runKitchenScenario(runtime, request = {}) {
@@ -1046,6 +1185,31 @@ function readString(input, key) {
     return input;
   }
   return "";
+}
+
+function resolveKitchenHumanScenario(idOrPrompt) {
+  const text = String(idOrPrompt ?? "").trim();
+  const exact = KITCHEN_HUMAN_SCENARIOS.find((scenario) => scenario.id === text);
+  if (exact) {
+    return exact;
+  }
+  const normalized = text.toLowerCase();
+  if (/\bopenai\b/.test(normalized) && /\bimage\b/.test(normalized)) {
+    return KITCHEN_HUMAN_SCENARIOS.find((scenario) => scenario.id === "live.openai-text-kitchen-image");
+  }
+  if (/\b(search|fetch|lookup|web)\b/.test(normalized)) {
+    return KITCHEN_HUMAN_SCENARIOS.find((scenario) => scenario.id === "search.fetch.summarize");
+  }
+  if (/\bchannel|chat\b/.test(normalized)) {
+    return KITCHEN_HUMAN_SCENARIOS.find((scenario) => scenario.id === "channel.prefix-image");
+  }
+  if (/\bblock|deny|approval\b/.test(normalized)) {
+    return KITCHEN_HUMAN_SCENARIOS.find((scenario) => scenario.id === "hook.block-tool");
+  }
+  if (/\b(memory|compact|remember)\b/.test(normalized)) {
+    return KITCHEN_HUMAN_SCENARIOS.find((scenario) => scenario.id === "memory.compact-fixture");
+  }
+  return KITCHEN_HUMAN_SCENARIOS.find((scenario) => scenario.id === "dry.prefix-image");
 }
 
 function inferKitchenScenario({ providerId, text, toolId, url }) {

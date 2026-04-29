@@ -131,7 +131,13 @@ const imageProvider = findRegistration("registerImageGenerationProvider", "kitch
 assert.equal(imageProvider.defaultModel, "kitchen-sink-image-v1");
 
 const sleeps = [];
-const { PLUGIN_ID, runKitchenImageTool, runKitchenScenario } = await import("../src/scenarios.js");
+const {
+  PLUGIN_ID,
+  listKitchenHumanScenarios,
+  runKitchenHumanScenario,
+  runKitchenImageTool,
+  runKitchenScenario,
+} = await import("../src/scenarios.js");
 const { createKitchenSinkRuntime } = await import("../src/kitchen-runtime.js");
 const fastRuntime = createKitchenSinkRuntime({
   delayMs: 10_000,
@@ -172,8 +178,40 @@ assert.deepEqual(
 );
 assert.ok(imageResult.image.dataUrl.startsWith("data:image/png;base64,"));
 
+const humanScenarios = listKitchenHumanScenarios();
+assert.deepEqual(
+  humanScenarios.map((scenario) => scenario.id),
+  [
+    "dry.prefix-image",
+    "live.openai-text-kitchen-image",
+    "search.fetch.summarize",
+    "channel.prefix-image",
+    "hook.block-tool",
+    "memory.compact-fixture",
+  ],
+);
+const liveImageScenario = await runKitchenHumanScenario(fastRuntime, "live.openai-text-kitchen-image");
+assert.equal(liveImageScenario.mode, "live-llm-compatible");
+assert.equal(liveImageScenario.result.route, "human:live-llm-image-provider");
+assert.equal(liveImageScenario.result.image.metadata.assetName, "kitchen_sink_office.png");
+const searchFetchScenario = await runKitchenHumanScenario(fastRuntime, "search.fetch.summarize");
+assert.equal(searchFetchScenario.result.search.results[0].id, "ks-result-image-provider");
+assert.equal(searchFetchScenario.result.fetch.finalUrl, "kitchen://fixture/readme");
+assert.match(searchFetchScenario.result.summary, /Kitchen Sink text fixture/);
+const channelScenario = await runKitchenHumanScenario(fastRuntime, "channel.prefix-image");
+assert.equal(channelScenario.result.delivery.channel, "kitchen-sink-channel");
+assert.equal(channelScenario.result.delivery.meta.scenarioId, "image.generate");
+const hookBlockScenario = await runKitchenHumanScenario(fastRuntime, "hook.block-tool");
+assert.equal(hookBlockScenario.result.block, true);
+assert.equal(hookBlockScenario.result.decision, "block");
+const memoryScenario = await runKitchenHumanScenario(fastRuntime, "memory.compact-fixture");
+assert.equal(memoryScenario.result.embedding.length, 8);
+assert.equal(memoryScenario.result.memory.results[0].id, "ks-memory-runtime-surfaces");
+assert.deepEqual(memoryScenario.result.compaction.preservedIdentifiers, ["ks_image_1f8a5a98"]);
+
+sleeps.length = 0;
 const failedImageResult = await fastRuntime.runImageJob({ prompt: "kitchen rate limit image" });
-assert.deepEqual(sleeps, [10_000, 10_000]);
+assert.deepEqual(sleeps, [10_000]);
 assert.equal(failedImageResult.job.status, "failed");
 assert.deepEqual(
   failedImageResult.job.timeline.map((entry) => entry.status),
@@ -184,6 +222,7 @@ assert.equal(failedImageResult.error.statusCode, 429);
 assert.equal(failedImageResult.error.retryAfterMs, 30_000);
 
 const failedToolResult = await runKitchenImageTool(fastRuntime, { prompt: "kitchen timeout image" });
+assert.deepEqual(sleeps, [10_000, 10_000]);
 assert.equal(failedToolResult.ok, false);
 assert.equal(failedToolResult.error.code, "timeout");
 assert.equal(failedToolResult.mediaUrl, undefined);

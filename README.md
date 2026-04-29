@@ -32,6 +32,20 @@ kitchen explain the fixture
 
 It also exposes provider and tool surfaces for live model routing:
 
+- `listKitchenHumanScenarios()` and `runKitchenHumanScenario(runtime, id)`
+  provide deterministic end-to-end user scenarios for fixture consumers:
+  `dry.prefix-image`, `live.openai-text-kitchen-image`,
+  `search.fetch.summarize`, `channel.prefix-image`, `hook.block-tool`, and
+  `memory.compact-fixture`.
+- When a live text provider such as OpenAI is active and Kitchen Sink is
+  selected as the image provider, the `live.openai-text-kitchen-image` scenario
+  proves the human prompt can route to the Kitchen Sink image provider and
+  return the bundled `kitchen_sink_office.png` asset without external image
+  credentials.
+- The `hook.block-tool` scenario proves terminal `before_tool_call` blocking,
+  and the contract probe script also checks the approval path and conversation
+  privacy observations for `llm_input`, `llm_output`, and `agent_end`.
+
 - `src/scenarios.js` is the shared deterministic fixture engine used by dry
   commands, tools, providers, hooks, channel delivery, and tests.
 - `kitchen_sink_image_job` returns a deterministic image job, waits 10 seconds
