@@ -155,6 +155,7 @@ jobs:
     uses: openclaw/clawhub/.github/workflows/package-publish.yml@main
     with:
       dry_run: false
+      owner: openclaw
       ref: ${{ needs.validate.outputs.tag_name }}
       version: ${{ needs.validate.outputs.package_version }}
       source_ref: refs/tags/${{ needs.validate.outputs.tag_name }}
