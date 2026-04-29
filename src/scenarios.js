@@ -754,8 +754,7 @@ export function observeKitchenHook(name, event, context) {
   const url = firstHookString(event, ["url"]) || firstHookString(event?.args, ["url"]);
   const text = extractHookText(event) || extractHookText(context);
   const scenarioId = inferKitchenScenario({ providerId, text, toolId, url });
-
-  return {
+  const observation = {
     kitchenSink: true,
     pluginId: PLUGIN_ID,
     hook: name,
@@ -765,6 +764,22 @@ export function observeKitchenHook(name, event, context) {
     observedEventKeys: Object.keys(event ?? {}),
     observedContextKeys: Object.keys(context ?? {}),
   };
+
+  if (name === "before_tool_call") {
+    return {
+      ...observation,
+      ...createBeforeToolCallDecision({ event, scenarioId, text, toolId }),
+    };
+  }
+
+  if (name === "llm_input" || name === "llm_output" || name === "agent_end") {
+    return {
+      ...observation,
+      privacy: createConversationPrivacyProbe({ event, context, text }),
+    };
+  }
+
+  return observation;
 }
 
 function createKitchenJob(kind, prompt, date, delayMs, scenarioId, route) {
@@ -1071,6 +1086,90 @@ function extractHookText(value) {
     firstHookString(value.args, ["prompt", "query", "text", "input", "content", "commandBody"]) ||
     extractInteractiveText(value)
   );
+}
+
+function createBeforeToolCallDecision({ event, scenarioId, text, toolId }) {
+  const params = createToolCallParams(event, scenarioId);
+  const lowerText = String(text ?? "").toLowerCase();
+  if (/\b(block|deny|forbid)\b/.test(lowerText)) {
+    return {
+      params,
+      block: true,
+      blockReason: `Kitchen Sink fixture blocked ${toolId || "tool"} for ${scenarioId}.`,
+      terminal: true,
+      decision: "block",
+    };
+  }
+  if (/\b(approval|approve|permission)\b/.test(lowerText)) {
+    const approvalId = `ks_approval_${stableHash(`${toolId}:${text}:${scenarioId}`).slice(0, 10)}`;
+    return {
+      params,
+      requireApproval: {
+        id: approvalId,
+        title: "Kitchen Sink tool approval",
+        reason: `Kitchen Sink fixture requires approval before ${toolId || "tool"} runs.`,
+        summary: `Approve deterministic ${scenarioId} fixture execution.`,
+        scenarioId,
+        pluginId: PLUGIN_ID,
+      },
+      decision: "approval",
+    };
+  }
+  return {
+    params,
+    decision: scenarioId === "observe" ? "observe" : "allow",
+  };
+}
+
+function createToolCallParams(event, scenarioId) {
+  const rawParams = event?.params && typeof event.params === "object" ? event.params : {};
+  const rawArgs = event?.args && typeof event.args === "object" ? event.args : {};
+  return {
+    ...rawParams,
+    args: {
+      ...rawArgs,
+      kitchenSinkScenario: scenarioId,
+      kitchenSinkPluginId: PLUGIN_ID,
+    },
+  };
+}
+
+function createConversationPrivacyProbe({ event, context, text }) {
+  const eventText = extractHookText(event);
+  const contextText = extractHookText(context);
+  const combined = [text, eventText, contextText].filter(Boolean).join("\n");
+  const redactedFields = [];
+  for (const [label, value] of [
+    ["event.apiKey", event?.apiKey],
+    ["event.authorization", event?.authorization],
+    ["event.token", event?.token],
+    ["context.apiKey", context?.apiKey],
+    ["context.authorization", context?.authorization],
+    ["context.token", context?.token],
+  ]) {
+    if (typeof value === "string" && value.trim()) {
+      redactedFields.push(label);
+    }
+  }
+  const secretText = [
+    combined,
+    event?.apiKey,
+    event?.authorization,
+    event?.token,
+    context?.apiKey,
+    context?.authorization,
+    context?.token,
+  ].filter(Boolean).join("\n");
+  const secretPatternHits = secretText.match(/\b(?:sk-[a-z0-9_-]+|api[_-]?key|authorization|bearer\s+[a-z0-9._-]+|fixture-token-[a-z0-9_-]+)\b/gi) ?? [];
+  return {
+    boundary: "conversation-observer",
+    promptHash: stableHash(combined || "empty"),
+    promptLength: combined.length,
+    redactedFields,
+    secretPatternCount: secretPatternHits.length,
+    storesRawPayload: false,
+    exposesRawPayload: false,
+  };
 }
 
 function firstHookString(source, keys) {

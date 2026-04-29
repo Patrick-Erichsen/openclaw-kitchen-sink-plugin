@@ -1,0 +1,501 @@
+{
+  "beforeToolCall": {
+    "allow": {
+      "kitchenSink": true,
+      "pluginId": "openclaw-kitchen-sink-fixture",
+      "hook": "before_tool_call",
+      "route": "hook:before_tool_call",
+      "matchedKitchen": true,
+      "scenarioId": "image.generate",
+      "observedEventKeys": [
+        "toolId",
+        "args"
+      ],
+      "observedContextKeys": [
+        "providerId"
+      ],
+      "params": {
+        "args": {
+          "prompt": "generate a kitchen image",
+          "kitchenSinkScenario": "image.generate",
+          "kitchenSinkPluginId": "openclaw-kitchen-sink-fixture"
+        }
+      },
+      "decision": "allow"
+    },
+    "block": {
+      "kitchenSink": true,
+      "pluginId": "openclaw-kitchen-sink-fixture",
+      "hook": "before_tool_call",
+      "route": "hook:before_tool_call",
+      "matchedKitchen": true,
+      "scenarioId": "image.generate",
+      "observedEventKeys": [
+        "toolId",
+        "args"
+      ],
+      "observedContextKeys": [
+        "providerId"
+      ],
+      "params": {
+        "args": {
+          "prompt": "kitchen block image generation",
+          "kitchenSinkScenario": "image.generate",
+          "kitchenSinkPluginId": "openclaw-kitchen-sink-fixture"
+        }
+      },
+      "block": true,
+      "blockReason": "Kitchen Sink fixture blocked kitchen_sink_image_job for image.generate.",
+      "terminal": true,
+      "decision": "block"
+    },
+    "approval": {
+      "kitchenSink": true,
+      "pluginId": "openclaw-kitchen-sink-fixture",
+      "hook": "before_tool_call",
+      "route": "hook:before_tool_call",
+      "matchedKitchen": true,
+      "scenarioId": "image.generate",
+      "observedEventKeys": [
+        "toolId",
+        "args"
+      ],
+      "observedContextKeys": [
+        "providerId"
+      ],
+      "params": {
+        "args": {
+          "prompt": "kitchen image generation needs approval",
+          "kitchenSinkScenario": "image.generate",
+          "kitchenSinkPluginId": "openclaw-kitchen-sink-fixture"
+        }
+      },
+      "requireApproval": {
+        "id": "ks_approval_9863b78c",
+        "title": "Kitchen Sink tool approval",
+        "reason": "Kitchen Sink fixture requires approval before kitchen_sink_image_job runs.",
+        "summary": "Approve deterministic image.generate fixture execution.",
+        "scenarioId": "image.generate",
+        "pluginId": "openclaw-kitchen-sink-fixture"
+      },
+      "decision": "approval"
+    }
+  },
+  "conversationPrivacy": {
+    "input": {
+      "kitchenSink": true,
+      "pluginId": "openclaw-kitchen-sink-fixture",
+      "hook": "llm_input",
+      "route": "hook:llm_input",
+      "matchedKitchen": true,
+      "scenarioId": "text.reply",
+      "observedEventKeys": [
+        "prompt",
+        "apiKey",
+        "token"
+      ],
+      "observedContextKeys": [
+        "providerId",
+        "authorization"
+      ],
+      "privacy": {
+        "boundary": "conversation-observer",
+        "promptHash": "21ed2705",
+        "promptLength": 55,
+        "redactedFields": [
+          "event.apiKey",
+          "event.token",
+          "context.authorization"
+        ],
+        "secretPatternCount": 3,
+        "storesRawPayload": false,
+        "exposesRawPayload": false
+      }
+    },
+    "output": {
+      "kitchenSink": true,
+      "pluginId": "openclaw-kitchen-sink-fixture",
+      "hook": "llm_output",
+      "route": "hook:llm_output",
+      "matchedKitchen": true,
+      "scenarioId": "text.reply",
+      "observedEventKeys": [
+        "prompt",
+        "apiKey",
+        "token"
+      ],
+      "observedContextKeys": [
+        "providerId",
+        "authorization"
+      ],
+      "privacy": {
+        "boundary": "conversation-observer",
+        "promptHash": "a3e6f809",
+        "promptLength": 41,
+        "redactedFields": [
+          "event.apiKey",
+          "event.token",
+          "context.authorization"
+        ],
+        "secretPatternCount": 3,
+        "storesRawPayload": false,
+        "exposesRawPayload": false
+      }
+    },
+    "end": {
+      "kitchenSink": true,
+      "pluginId": "openclaw-kitchen-sink-fixture",
+      "hook": "agent_end",
+      "route": "hook:agent_end",
+      "matchedKitchen": true,
+      "scenarioId": "text.reply",
+      "observedEventKeys": [
+        "prompt",
+        "apiKey",
+        "token"
+      ],
+      "observedContextKeys": [
+        "providerId",
+        "authorization"
+      ],
+      "privacy": {
+        "boundary": "conversation-observer",
+        "promptHash": "8bf533dd",
+        "promptLength": 41,
+        "redactedFields": [
+          "event.apiKey",
+          "event.token",
+          "context.authorization"
+        ],
+        "secretPatternCount": 3,
+        "storesRawPayload": false,
+        "exposesRawPayload": false
+      }
+    }
+  },
+  "channel": {
+    "account": {
+      "accountId": "local",
+      "name": "Kitchen Sink Local",
+      "enabled": true,
+      "configured": true,
+      "statusState": "ready",
+      "linked": true,
+      "running": true,
+      "connected": true,
+      "mode": "local",
+      "health": {
+        "ok": true,
+        "checkedAt": "2026-04-28T00:00:00.000Z",
+        "message": "Kitchen Sink local fixture account is ready."
+      },
+      "capabilities": [
+        "text",
+        "media",
+        "threads",
+        "dry-run"
+      ]
+    },
+    "delivery": {
+      "channel": "kitchen-sink-channel",
+      "messageId": "ks_channel_d813aa04",
+      "conversationId": "kitchen-demo",
+      "channelId": "kitchen-demo",
+      "timestamp": 1777494231851,
+      "deliveryStatus": "sent",
+      "transport": "kitchen-sink-local",
+      "meta": {
+        "kitchenSink": true,
+        "pluginId": "openclaw-kitchen-sink-fixture",
+        "scenarioId": "image.generate",
+        "kind": "text"
+      }
+    },
+    "route": {
+      "sessionKey": "kitchen:fixture-agent:kitchen-demo",
+      "baseSessionKey": "kitchen:fixture-agent:kitchen-demo",
+      "peer": {
+        "kind": "direct",
+        "id": "kitchen-demo"
+      },
+      "chatType": "direct",
+      "from": "local",
+      "to": "kitchen-demo",
+      "threadId": "thread-1"
+    }
+  },
+  "runtimeRegistrations": {
+    "registerAgentHarness": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-agent-harness"
+      ]
+    },
+    "registerAgentToolResultMiddleware": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-agent-tool-result-middleware",
+        "kitchen-sink-agent-tool-result-middleware"
+      ]
+    },
+    "registerAutoEnableProbe": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-auto-enable-probe"
+      ]
+    },
+    "registerChannel": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-channel",
+        "kitchen-sink-channel-probe"
+      ]
+    },
+    "registerCli": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink",
+        "kitchen-sink-cli"
+      ]
+    },
+    "registerCliBackend": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-cli-backend"
+      ]
+    },
+    "registerCodexAppServerExtensionFactory": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-codex-app-server-extension-factory"
+      ]
+    },
+    "registerCommand": {
+      "count": 3,
+      "ids": [
+        "kitchen",
+        "kitchen-sink",
+        "kitchen-sink-command"
+      ]
+    },
+    "registerCompactionProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-compaction",
+        "kitchen-sink-compaction-provider"
+      ]
+    },
+    "registerConfigMigration": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-config-migration"
+      ]
+    },
+    "registerContextEngine": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-context-engine"
+      ]
+    },
+    "registerDetachedTaskRuntime": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-detached-task-runtime"
+      ]
+    },
+    "registerGatewayDiscoveryService": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-gateway-discovery-service"
+      ]
+    },
+    "registerGatewayMethod": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-gateway-method",
+        "kitchen.status"
+      ]
+    },
+    "registerHook": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-hook"
+      ]
+    },
+    "registerHttpRoute": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-http-route",
+        "kitchen-sink-http-status"
+      ]
+    },
+    "registerImageGenerationProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-image",
+        "kitchen-sink-image-generation-provider"
+      ]
+    },
+    "registerInteractiveHandler": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-interactive-handler",
+        "kitchen-sink-interactive-handler"
+      ]
+    },
+    "registerMediaUnderstandingProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-media",
+        "kitchen-sink-media-understanding-provider"
+      ]
+    },
+    "registerMemoryCapability": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-memory-capability"
+      ]
+    },
+    "registerMemoryCorpusSupplement": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-memory-corpus",
+        "kitchen-sink-memory-corpus-supplement"
+      ]
+    },
+    "registerMemoryEmbeddingProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-memory-embedding",
+        "kitchen-sink-memory-embedding-provider"
+      ]
+    },
+    "registerMemoryFlushPlan": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-memory-flush-plan"
+      ]
+    },
+    "registerMemoryPromptSection": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-memory-prompt-section"
+      ]
+    },
+    "registerMemoryPromptSupplement": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-memory-prompt-supplement",
+        "kitchen-sink-memory-prompt-supplement"
+      ]
+    },
+    "registerMemoryRuntime": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-memory-runtime"
+      ]
+    },
+    "registerMigrationProvider": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-migration-provider"
+      ]
+    },
+    "registerMusicGenerationProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-music",
+        "kitchen-sink-music-generation-provider"
+      ]
+    },
+    "registerNodeHostCommand": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-node-host-command"
+      ]
+    },
+    "registerProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-llm",
+        "kitchen-sink-provider"
+      ]
+    },
+    "registerRealtimeTranscriptionProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-realtime-transcription",
+        "kitchen-sink-realtime-transcription-provider"
+      ]
+    },
+    "registerRealtimeVoiceProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-realtime-voice",
+        "kitchen-sink-realtime-voice-provider"
+      ]
+    },
+    "registerReload": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-reload"
+      ]
+    },
+    "registerSecurityAuditCollector": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-security-audit-collector"
+      ]
+    },
+    "registerService": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-service",
+        "kitchen-sink-service"
+      ]
+    },
+    "registerSpeechProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-speech",
+        "kitchen-sink-speech-provider"
+      ]
+    },
+    "registerTextTransforms": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-text-transforms"
+      ]
+    },
+    "registerTool": {
+      "count": 4,
+      "ids": [
+        "kitchen-sink-tool",
+        "kitchen_sink_image_job",
+        "kitchen_sink_search",
+        "kitchen_sink_text"
+      ]
+    },
+    "registerVideoGenerationProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-video",
+        "kitchen-sink-video-generation-provider"
+      ]
+    },
+    "registerWebFetchProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-fetch",
+        "kitchen-sink-web-fetch-provider"
+      ]
+    },
+    "registerWebSearchProvider": {
+      "count": 2,
+      "ids": [
+        "kitchen-sink-search",
+        "kitchen-sink-web-search-provider"
+      ]
+    }
+  }
+}

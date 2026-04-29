@@ -51,7 +51,7 @@
     }
   },
   "scripts": {
-    "check": "npm run sync:surface -- --check && node scripts/check-sdk-surface.mjs && node scripts/check-kitchen-runtime.mjs && npm run plugin:inspect",
+    "check": "npm run sync:surface -- --check && node scripts/check-sdk-surface.mjs && node scripts/check-kitchen-runtime.mjs && node scripts/check-kitchen-contract-probes.mjs && npm run plugin:inspect",
     "pack:check": "node scripts/check-pack-payload.mjs",
     "plugin:inspect": "plugin-inspector check --config plugin-inspector.config.json --no-openclaw",
     "plugin:inspect:runtime": "PLUGIN_INSPECTOR_EXECUTE_ISOLATED=1 plugin-inspector check --config plugin-inspector.config.json --no-openclaw --runtime --mock-sdk",

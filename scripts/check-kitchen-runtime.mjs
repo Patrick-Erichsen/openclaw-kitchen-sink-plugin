@@ -48,6 +48,40 @@ assert.equal(hookResult.pluginId, "openclaw-kitchen-sink-fixture");
 assert.equal(hookResult.route, "hook:before_tool_call");
 assert.equal(hookResult.scenarioId, "image.generate");
 assert.equal(hookResult.matchedKitchen, true);
+assert.equal(hookResult.decision, "allow");
+assert.equal(hookResult.params.args.kitchenSinkScenario, "image.generate");
+
+const blockedToolHookResult = await beforeToolHook(
+  { toolId: "kitchen_sink_image_job", args: { prompt: "kitchen block this image" } },
+  { providerId: "kitchen-sink-image" },
+);
+assert.equal(blockedToolHookResult.block, true);
+assert.equal(blockedToolHookResult.terminal, true);
+assert.equal(blockedToolHookResult.decision, "block");
+assert.match(blockedToolHookResult.blockReason, /blocked kitchen_sink_image_job/);
+
+const approvalToolHookResult = await beforeToolHook(
+  { toolId: "kitchen_sink_image_job", args: { prompt: "kitchen image needs approval" } },
+  { providerId: "kitchen-sink-image" },
+);
+assert.equal(approvalToolHookResult.decision, "approval");
+assert.equal(approvalToolHookResult.requireApproval.pluginId, "openclaw-kitchen-sink-fixture");
+assert.equal(approvalToolHookResult.requireApproval.scenarioId, "image.generate");
+
+const llmInputHook = findHook("llm_input");
+const llmInputResult = await llmInputHook(
+  {
+    prompt: "kitchen explain image routing with api_key sk-test-redacted",
+    apiKey: "sk-real-secret-not-stored",
+  },
+  { providerId: "kitchen-sink-llm", authorization: "Bearer local-secret" },
+);
+assert.equal(llmInputResult.scenarioId, "text.reply");
+assert.equal(llmInputResult.privacy.boundary, "conversation-observer");
+assert.equal(llmInputResult.privacy.storesRawPayload, false);
+assert.equal(llmInputResult.privacy.exposesRawPayload, false);
+assert.deepEqual(llmInputResult.privacy.redactedFields, ["event.apiKey", "context.authorization"]);
+assert.ok(llmInputResult.privacy.secretPatternCount >= 2);
 
 const channel = findRegistration("registerChannel", "kitchen-sink-channel");
 const channelAccount = channel.config.resolveAccount({}, "local");
