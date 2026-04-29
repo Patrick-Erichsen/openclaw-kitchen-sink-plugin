@@ -5,7 +5,7 @@ import { registerKitchenSinkRuntime } from "./kitchen-runtime.js";
 export const plugin = {
   id: "openclaw-kitchen-sink-fixture",
   name: "OpenClaw Kitchen Sink",
-  version: "0.1.2",
+  version: "0.1.5",
   description: "Credential-free fixture covering OpenClaw plugin API seams.",
   register(api) {
     registerAllHooks(api);

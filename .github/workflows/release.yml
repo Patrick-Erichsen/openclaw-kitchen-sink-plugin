@@ -158,6 +158,8 @@ jobs:
           NODE_AUTH_TOKEN: ""
 
   publish-clawhub:
+    # Disabled until the kitchen-sink package exists in the ClawHub org/registry.
+    if: ${{ false }}
     needs: validate
     permissions:
       contents: read
