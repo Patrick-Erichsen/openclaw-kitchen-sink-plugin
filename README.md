@@ -17,6 +17,16 @@ detached-task, and text-provider catalog surfaces.
 It should not call external services, read secrets, spawn processes, or require
 live credentials.
 
+The plugin exposes three test personalities through
+`plugins.entries.openclaw-kitchen-sink-fixture.config.personality`:
+
+- `full` is the default compatibility mode and keeps both generated probe
+  registrations and the hand-owned runtime.
+- `conformance` loads only the valid runtime surfaces and skips intentionally
+  invalid probes so OpenClaw can assert a clean external-plugin install.
+- `adversarial` loads only generated invalid probes so OpenClaw can assert
+  expected diagnostics without mixing them with a live runtime smoke.
+
 ## Kitchen Runtime
 
 The fixture can be used dry, without an LLM:

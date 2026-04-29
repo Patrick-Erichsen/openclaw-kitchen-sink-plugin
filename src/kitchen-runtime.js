@@ -53,6 +53,7 @@ export { createKitchenSinkImageAsset, kitchenPromptGuidance, shouldHandleKitchen
 
 export function registerKitchenSinkRuntime(api, options = {}) {
   const runtime = createKitchenSinkRuntime(options);
+  const includeAgentToolResultMiddleware = options.includeAgentToolResultMiddleware !== false;
 
   optionalRegister(api, "registerCommand", () => api.registerCommand(buildKitchenCommand(runtime)));
   optionalRegister(api, "registerCommand", () => api.registerCommand(buildKitchenSinkCommand(runtime)));
@@ -101,11 +102,13 @@ export function registerKitchenSinkRuntime(api, options = {}) {
   optionalRegister(api, "registerCompactionProvider", () =>
     api.registerCompactionProvider(buildKitchenCompactionProvider()),
   );
-  optionalRegister(api, "registerAgentToolResultMiddleware", () =>
-    api.registerAgentToolResultMiddleware(buildKitchenToolResultMiddleware(), {
-      runtimes: ["pi", "codex", "cli"],
-    }),
-  );
+  if (includeAgentToolResultMiddleware) {
+    optionalRegister(api, "registerAgentToolResultMiddleware", () =>
+      api.registerAgentToolResultMiddleware(buildKitchenToolResultMiddleware(), {
+        runtimes: ["pi", "codex", "cli"],
+      }),
+    );
+  }
   optionalRegister(api, "registerService", () => api.registerService(buildKitchenService()));
   optionalRegister(api, "registerHttpRoute", () => api.registerHttpRoute(buildKitchenHttpRoute()));
   optionalRegister(api, "registerGatewayMethod", () =>

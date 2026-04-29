@@ -33,6 +33,7 @@ const requiredFiles = [
   "src/index.js",
   "src/assets/kitchen_sink_office.png",
   "src/kitchen-runtime.js",
+  "src/personality.js",
   "src/scenarios.js",
   "src/setup.js",
   "src/generated-hooks.js",

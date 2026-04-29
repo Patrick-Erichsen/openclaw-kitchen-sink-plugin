@@ -197,6 +197,15 @@
       "enabled": {
         "type": "boolean",
         "default": false
+      },
+      "personality": {
+        "type": "string",
+        "enum": [
+          "full",
+          "conformance",
+          "adversarial"
+        ],
+        "default": "full"
       }
     }
   }

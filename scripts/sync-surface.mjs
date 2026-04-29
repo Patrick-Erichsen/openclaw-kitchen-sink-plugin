@@ -130,16 +130,28 @@ function renderRuntimeIndex() {
   return `import { registerAllHooks } from "./generated-hooks.js";
 import { registerAllRegistrars } from "./generated-registrars.js";
 import { registerKitchenSinkRuntime } from "./kitchen-runtime.js";
+import {
+  KITCHEN_SINK_EXPECTED_DIAGNOSTICS,
+  resolveKitchenSinkPersonality,
+} from "./personality.js";
 
 export const plugin = {
   id: "openclaw-kitchen-sink-fixture",
   name: "OpenClaw Kitchen Sink",
   version: "${packageJson.version}",
   description: "Credential-free fixture covering OpenClaw plugin API seams.",
+  expectedDiagnostics: KITCHEN_SINK_EXPECTED_DIAGNOSTICS,
   register(api) {
+    const personality = resolveKitchenSinkPersonality(api);
     registerAllHooks(api);
-    registerAllRegistrars(api);
-    registerKitchenSinkRuntime(api);
+    if (personality !== "conformance") {
+      registerAllRegistrars(api);
+    }
+    if (personality !== "adversarial") {
+      registerKitchenSinkRuntime(api, {
+        includeAgentToolResultMiddleware: personality !== "conformance",
+      });
+    }
   },
 };
 
@@ -223,6 +235,7 @@ function renderManifest({ manifestContracts, packageVersion }) {
       additionalProperties: false,
       properties: {
         enabled: { type: "boolean", default: false },
+        personality: { type: "string", enum: ["full", "conformance", "adversarial"], default: "full" },
       },
     },
   };

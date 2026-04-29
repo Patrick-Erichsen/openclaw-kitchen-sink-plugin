@@ -30,6 +30,7 @@
   },
   "exports": {
     ".": "./src/index.js",
+    "./personality": "./src/personality.js",
     "./runtime": "./src/kitchen-runtime.js",
     "./scenarios": "./src/scenarios.js",
     "./setup": "./src/setup.js"
