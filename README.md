@@ -94,6 +94,5 @@ not replace the stable `latest` tag.
 
 Pull requests run a ClawHub package-publish dry run through the canonical
 `openclaw/clawhub` reusable workflow on `main`, so the fixture tests the current
-ClawHub publishing path instead of a vendored copy. Release publishing is wired
-the same way, but remains disabled until the ClawHub org/package ownership for
-this fixture is set up.
+ClawHub publishing path instead of a vendored copy. Releases publish to ClawHub
+through the same canonical workflow after validation.

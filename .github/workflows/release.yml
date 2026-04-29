@@ -148,8 +148,6 @@ jobs:
           npm publish "./release-artifacts/${{ needs.validate.outputs.tarball_name }}" --access public --tag "${{ needs.validate.outputs.npm_tag }}"
 
   publish-clawhub:
-    # Disabled until the kitchen-sink package exists in the ClawHub org/registry.
-    if: ${{ false }}
     needs: validate
     permissions:
       contents: read
