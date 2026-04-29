@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 
 export function capturePluginRegistration(plugin, config = {}) {
+  // The harness captures every register* call through one proxy, which lets
+  // scripts inspect new SDK registrars without updating bespoke mocks first.
   const captured = {};
   const api = new Proxy(
     {

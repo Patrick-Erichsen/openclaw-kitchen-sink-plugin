@@ -40,6 +40,9 @@ import {
 
 export { createKitchenSinkImageAsset, kitchenPromptGuidance, shouldHandleKitchenText };
 
+// Keep this file as the readable runtime table of contents. The builders live
+// under src/runtime/* so plugin authors can inspect one OpenClaw surface at a
+// time without losing the full registration order.
 export function registerKitchenSinkRuntime(api, options = {}) {
   const runtime = createKitchenSinkRuntime(options);
   const includeAgentToolResultMiddleware = options.includeAgentToolResultMiddleware !== false;
@@ -116,6 +119,8 @@ export function createKitchenSinkRuntime(options = {}) {
 }
 
 function optionalRegister(api, method, register) {
+  // Kitchen Sink runs against multiple SDK/inspector versions. Missing optional
+  // registrar methods should quietly no-op instead of making older hosts fail.
   if (typeof api?.[method] !== "function") {
     return;
   }

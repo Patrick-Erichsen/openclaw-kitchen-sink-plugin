@@ -65,6 +65,8 @@ export {
   kitchenTextResponse,
 } from "./fixtures/text.js";
 
+// Human scenarios are the end-to-end smoke matrix: dry prefix routing, live LLM
+// plus Kitchen Sink provider routing, hooks, channels, search/fetch, and memory.
 export const KITCHEN_HUMAN_SCENARIOS = Object.freeze([
   {
     id: "dry.prefix-image",
@@ -111,6 +113,8 @@ export const KITCHEN_HUMAN_SCENARIOS = Object.freeze([
 ]);
 
 export function createKitchenScenarioRuntime(options = {}) {
+  // Clock and sleep are injectable so tests can prove the 10s job lifecycle
+  // without actually waiting, while real runtime execution still behaves async.
   const runtime = {
     delayMs: normalizeDelayMs(options.delayMs),
     sleep: typeof options.sleep === "function" ? options.sleep : defaultSleep,
@@ -232,6 +236,8 @@ export async function runKitchenHumanScenario(runtime, idOrPrompt) {
 }
 
 export async function runKitchenScenario(runtime, request = {}) {
+  // Central dispatcher for deterministic provider behavior. Runtime builders
+  // adapt OpenClaw APIs into this small scenario vocabulary.
   const scenario = normalizeScenario(request.scenario);
   if (scenario === "image.generate") {
     const prompt = normalizePrompt(request.prompt, "a kitchen sink fixture image");
@@ -790,6 +796,8 @@ export function extractInteractiveText(ctx) {
 }
 
 export function observeKitchenHook(name, event, context) {
+  // Hooks receive different shapes across tool, provider, and agent surfaces.
+  // Normalize them into scenario ids so reports stay comparable.
   const toolId = firstHookString(event, ["toolId", "toolName", "name", "id"]) ||
     firstHookString(event?.tool, ["id", "name"]);
   const providerId = firstHookString(event, ["providerId", "provider", "selectedProvider"]) ||

@@ -9,6 +9,8 @@ import {
 } from "../constants.js";
 
 export function kitchenTextProviderConfig() {
+  // Looks like a real provider config, but stays credential-free and local so
+  // installs can use it in CI, Crabpot, and plugin-inspector.
   return {
     baseUrl: "kitchen-sink://local",
     apiKey: "kitchen-sink-local-fixture",
@@ -32,6 +34,8 @@ export function kitchenTextModelDefinition() {
 }
 
 export function createKitchenTextStream(model, context) {
+  // Emit the same coarse lifecycle events a streaming text provider would emit;
+  // consumers can test stream handling without a live model.
   const stream = createAssistantMessageEventStream();
   queueMicrotask(() => {
     const prompt = extractLastUserPrompt(context);

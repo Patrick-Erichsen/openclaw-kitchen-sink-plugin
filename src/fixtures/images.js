@@ -2,6 +2,8 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { DEFAULT_IMAGE_MODEL, PLUGIN_ID } from "../constants.js";
 
+// Use a real bundled PNG so image-provider consumers exercise binary payloads,
+// data URLs, hashes, and dimensions instead of a text-only mock.
 const KITCHEN_SINK_OFFICE_IMAGE_FILE = "kitchen_sink_office.png";
 const KITCHEN_SINK_OFFICE_IMAGE = readFileSync(
   new URL(`../assets/${KITCHEN_SINK_OFFICE_IMAGE_FILE}`, import.meta.url),
@@ -60,6 +62,8 @@ export function createKitchenSinkImageAsset({
 }
 
 function selectKitchenImageFixture(_prompt) {
+  // Single fixture today, prompt-aware selection later if we add more real
+  // assets for edit/upscale/multi-image scenarios.
   return KITCHEN_IMAGE_FIXTURES[0];
 }
 

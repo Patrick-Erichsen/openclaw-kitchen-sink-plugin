@@ -38,6 +38,8 @@ import {
   stripDataUrl,
 } from "../scenarios.js";
 
+// Provider builders intentionally stay thin: map OpenClaw provider contracts to
+// deterministic scenarios/fixtures, and keep the mock behavior outside runtime wiring.
 export function buildKitchenImageProvider(runtime) {
   return {
     id: IMAGE_PROVIDER_ID,
