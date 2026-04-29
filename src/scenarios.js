@@ -1,29 +1,56 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
+import {
+  CHANNEL_ACCOUNT_ID,
+  CHANNEL_ID,
+  COMPACTION_PROVIDER_ID,
+  DEFAULT_EMBEDDING_MODEL,
+  DEFAULT_IMAGE_DELAY_MS,
+  DEFAULT_IMAGE_MODEL,
+  DEFAULT_MEDIA_MODEL,
+  DEFAULT_MUSIC_MODEL,
+  DEFAULT_SPEECH_MODEL,
+  DEFAULT_TEXT_MODEL,
+  DEFAULT_VIDEO_MODEL,
+  IMAGE_PROVIDER_ID,
+  MEDIA_PROVIDER_ID,
+  MEMORY_EMBEDDING_PROVIDER_ID,
+  MUSIC_PROVIDER_ID,
+  PLUGIN_ID,
+  REALTIME_TRANSCRIPTION_PROVIDER_ID,
+  REALTIME_VOICE_PROVIDER_ID,
+  SPEECH_PROVIDER_ID,
+  TEXT_PROVIDER_ID,
+  VIDEO_PROVIDER_ID,
+  WEB_FETCH_PROVIDER_ID,
+  WEB_SEARCH_PROVIDER_ID,
+} from "./constants.js";
 
-export const PLUGIN_ID = "openclaw-kitchen-sink-fixture";
-export const IMAGE_PROVIDER_ID = "kitchen-sink-image";
-export const MEDIA_PROVIDER_ID = "kitchen-sink-media";
-export const TEXT_PROVIDER_ID = "kitchen-sink-llm";
-export const WEB_SEARCH_PROVIDER_ID = "kitchen-sink-search";
-export const WEB_FETCH_PROVIDER_ID = "kitchen-sink-fetch";
-export const SPEECH_PROVIDER_ID = "kitchen-sink-speech";
-export const REALTIME_TRANSCRIPTION_PROVIDER_ID = "kitchen-sink-realtime-transcription";
-export const REALTIME_VOICE_PROVIDER_ID = "kitchen-sink-realtime-voice";
-export const VIDEO_PROVIDER_ID = "kitchen-sink-video";
-export const MUSIC_PROVIDER_ID = "kitchen-sink-music";
-export const MEMORY_EMBEDDING_PROVIDER_ID = "kitchen-sink-memory-embedding";
-export const COMPACTION_PROVIDER_ID = "kitchen-sink-compaction";
-export const CHANNEL_ID = "kitchen-sink-channel";
-export const CHANNEL_ACCOUNT_ID = "local";
-export const DEFAULT_IMAGE_MODEL = "kitchen-sink-image-v1";
-export const DEFAULT_MEDIA_MODEL = "kitchen-sink-vision-v1";
-export const DEFAULT_TEXT_MODEL = "kitchen-sink-text-v1";
-export const DEFAULT_SPEECH_MODEL = "kitchen-sink-tts-v1";
-export const DEFAULT_VIDEO_MODEL = "kitchen-sink-video-v1";
-export const DEFAULT_MUSIC_MODEL = "kitchen-sink-music-v1";
-export const DEFAULT_EMBEDDING_MODEL = "kitchen-sink-embed-v1";
-export const DEFAULT_IMAGE_DELAY_MS = 10_000;
+export {
+  CHANNEL_ACCOUNT_ID,
+  CHANNEL_ID,
+  COMPACTION_PROVIDER_ID,
+  DEFAULT_EMBEDDING_MODEL,
+  DEFAULT_IMAGE_DELAY_MS,
+  DEFAULT_IMAGE_MODEL,
+  DEFAULT_MEDIA_MODEL,
+  DEFAULT_MUSIC_MODEL,
+  DEFAULT_SPEECH_MODEL,
+  DEFAULT_TEXT_MODEL,
+  DEFAULT_VIDEO_MODEL,
+  IMAGE_PROVIDER_ID,
+  MEDIA_PROVIDER_ID,
+  MEMORY_EMBEDDING_PROVIDER_ID,
+  MUSIC_PROVIDER_ID,
+  PLUGIN_ID,
+  REALTIME_TRANSCRIPTION_PROVIDER_ID,
+  REALTIME_VOICE_PROVIDER_ID,
+  SPEECH_PROVIDER_ID,
+  TEXT_PROVIDER_ID,
+  VIDEO_PROVIDER_ID,
+  WEB_FETCH_PROVIDER_ID,
+  WEB_SEARCH_PROVIDER_ID,
+} from "./constants.js";
 const KITCHEN_SINK_OFFICE_IMAGE_FILE = "kitchen_sink_office.png";
 const KITCHEN_SINK_OFFICE_IMAGE = readFileSync(
   new URL(`./assets/${KITCHEN_SINK_OFFICE_IMAGE_FILE}`, import.meta.url),

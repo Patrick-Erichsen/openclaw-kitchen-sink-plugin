@@ -7,7 +7,7 @@ import {
   REALTIME_VOICE_PROVIDER_ID,
   SPEECH_PROVIDER_ID,
   VIDEO_PROVIDER_ID,
-} from "../scenarios.js";
+} from "../constants.js";
 
 export function buildKitchenToolResultMiddleware() {
   return async (event = {}) => ({

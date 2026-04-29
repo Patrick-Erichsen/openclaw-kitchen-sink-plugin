@@ -1,4 +1,4 @@
-import { PLUGIN_ID } from "../scenarios.js";
+import { PLUGIN_ID } from "../constants.js";
 
 export function buildKitchenDetachedTaskRuntime() {
   const tasks = new Map();

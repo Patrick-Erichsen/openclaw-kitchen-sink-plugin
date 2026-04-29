@@ -1,3 +1,4 @@
+import { PLUGIN_ID } from "./constants.js";
 import { registerAllHooks } from "./generated-hooks.js";
 import { registerAllRegistrars } from "./generated-registrars.js";
 import { registerKitchenSinkRuntime } from "./kitchen-runtime.js";
@@ -7,7 +8,7 @@ import {
 } from "./personality.js";
 
 export const plugin = {
-  id: "openclaw-kitchen-sink-fixture",
+  id: PLUGIN_ID,
   name: "OpenClaw Kitchen Sink",
   version: "0.2.2",
   description: "Credential-free fixture covering OpenClaw plugin API seams.",
