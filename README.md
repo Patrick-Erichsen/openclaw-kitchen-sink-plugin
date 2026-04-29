@@ -31,7 +31,8 @@ It also exposes provider and tool surfaces for live model routing:
 - `src/scenarios.js` is the shared deterministic fixture engine used by dry
   commands, tools, providers, hooks, channel delivery, and tests.
 - `kitchen_sink_image_job` returns a deterministic image job, waits 10 seconds
-  in real runtime execution, then returns a bundled SVG image payload.
+  in real runtime execution, then returns the bundled `kitchen_sink_office.png`
+  image payload.
 - `kitchen-sink-image` is a registered image generation provider with aliases
   `kitchen`, `kitchen-sink`, and `openclaw-kitchen-sink`.
 - `kitchen-sink-media` describes images with deterministic fixture text.

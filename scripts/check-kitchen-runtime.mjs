@@ -108,9 +108,16 @@ assert.equal(imageResult.route, "provider:image");
 assert.equal(imageResult.job.status, "completed");
 assert.equal(imageResult.job.pluginId, "openclaw-kitchen-sink-fixture");
 assert.equal(imageResult.image.metadata.pluginId, "openclaw-kitchen-sink-fixture");
-assert.equal(imageResult.image.mimeType, "image/svg+xml");
-assert.ok(imageResult.image.buffer.toString("utf8").includes("Kitchen Sink Fixture"));
-assert.ok(imageResult.image.dataUrl.startsWith("data:image/svg+xml;base64,"));
+assert.equal(imageResult.image.metadata.assetName, "kitchen_sink_office.png");
+assert.equal(imageResult.image.metadata.width, 1024);
+assert.equal(imageResult.image.metadata.height, 1024);
+assert.equal(imageResult.image.mimeType, "image/png");
+assert.equal(imageResult.image.fileName, `${imageResult.job.id}.png`);
+assert.deepEqual(
+  [...imageResult.image.buffer.subarray(0, 8)],
+  [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a],
+);
+assert.ok(imageResult.image.dataUrl.startsWith("data:image/png;base64,"));
 
 const scenarioResult = await runKitchenScenario(fastRuntime, {
   scenario: "web.fetch",

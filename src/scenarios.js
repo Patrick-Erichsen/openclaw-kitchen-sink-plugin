@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 export const PLUGIN_ID = "openclaw-kitchen-sink-fixture";
 export const IMAGE_PROVIDER_ID = "kitchen-sink-image";
 export const MEDIA_PROVIDER_ID = "kitchen-sink-media";
@@ -10,6 +12,10 @@ export const DEFAULT_IMAGE_MODEL = "kitchen-sink-image-v1";
 export const DEFAULT_MEDIA_MODEL = "kitchen-sink-vision-v1";
 export const DEFAULT_TEXT_MODEL = "kitchen-sink-text-v1";
 export const DEFAULT_IMAGE_DELAY_MS = 10_000;
+const KITCHEN_SINK_OFFICE_IMAGE_FILE = "kitchen_sink_office.png";
+const KITCHEN_SINK_OFFICE_IMAGE = readFileSync(
+  new URL(`./assets/${KITCHEN_SINK_OFFICE_IMAGE_FILE}`, import.meta.url),
+);
 
 export function createKitchenScenarioRuntime(options = {}) {
   const runtime = {
@@ -91,16 +97,18 @@ export async function runKitchenScenario(runtime, request = {}) {
 }
 
 export function createKitchenSinkImageAsset({ prompt, jobId, scenario = "image.generate" }) {
-  const svg = renderKitchenSinkSvg({ prompt, jobId });
-  const buffer = Buffer.from(svg, "utf8");
+  const buffer = Buffer.from(KITCHEN_SINK_OFFICE_IMAGE);
   return {
     buffer,
-    mimeType: "image/svg+xml",
-    fileName: `${jobId}.svg`,
-    dataUrl: `data:image/svg+xml;base64,${buffer.toString("base64")}`,
-    revisedPrompt: `Kitchen sink fixture image for: ${prompt}`,
+    mimeType: "image/png",
+    fileName: `${jobId}.png`,
+    dataUrl: `data:image/png;base64,${buffer.toString("base64")}`,
+    revisedPrompt: `Kitchen sink office fixture image for: ${prompt}`,
     metadata: {
       kitchenSink: true,
+      assetName: KITCHEN_SINK_OFFICE_IMAGE_FILE,
+      width: 1024,
+      height: 1024,
       pluginId: PLUGIN_ID,
       scenarioId: scenario,
       jobId,
@@ -314,7 +322,7 @@ export function kitchenImageDescription(prompt, count) {
   return [
     `Kitchen Sink media fixture described ${count || 1} image${count === 1 ? "" : "s"}.`,
     `Prompt: ${normalizePrompt(prompt, "describe kitchen sink image")}.`,
-    "Visible content: a deterministic sink basin, faucet, job id label, and OpenClaw fixture badge.",
+    "Visible content: the bundled kitchen_sink_office PNG: an office lobby scene with a lobster-costumed figure holding a real sink.",
   ].join(" ");
 }
 
@@ -411,25 +419,6 @@ function createKitchenJob(kind, prompt, date, delayMs, scenarioId, route) {
     scenarioId,
     route: route || defaultRouteForScenario(scenarioId),
   };
-}
-
-function renderKitchenSinkSvg({ prompt, jobId }) {
-  const safePrompt = escapeXml(prompt).slice(0, 180);
-  const safeJobId = escapeXml(jobId);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect width="1024" height="1024" fill="#f7f3ea"/>
-  <rect x="96" y="150" width="832" height="724" rx="48" fill="#24313a"/>
-  <rect x="154" y="248" width="716" height="530" rx="72" fill="#d8e7e5"/>
-  <rect x="234" y="320" width="556" height="380" rx="54" fill="#f8fbf9"/>
-  <path d="M342 416h340c38 0 68 30 68 68v66c0 82-66 148-148 148H422c-82 0-148-66-148-148v-66c0-38 30-68 68-68Z" fill="#b7d4d1"/>
-  <path d="M464 388v-64c0-72 58-130 130-130h78v70h-78c-33 0-60 27-60 60v64h-70Z" fill="#5b707a"/>
-  <rect x="620" y="190" width="144" height="74" rx="28" fill="#5b707a"/>
-  <circle cx="512" cy="560" r="46" fill="#24313a"/>
-  <circle cx="512" cy="560" r="22" fill="#8fa5a3"/>
-  <text x="512" y="835" text-anchor="middle" font-family="Arial, sans-serif" font-size="44" font-weight="700" fill="#f7f3ea">Kitchen Sink Fixture</text>
-  <text x="512" y="890" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#d8e7e5">${safeJobId}</text>
-  <text x="512" y="940" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#24313a">${safePrompt}</text>
-</svg>`;
 }
 
 function createAssistantMessageEventStream() {
@@ -644,12 +633,4 @@ function stableHash(input) {
     hash = Math.imul(hash, 16777619);
   }
   return (hash >>> 0).toString(16).padStart(8, "0");
-}
-
-function escapeXml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
 }
