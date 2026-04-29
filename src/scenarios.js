@@ -7,11 +7,22 @@ export const MEDIA_PROVIDER_ID = "kitchen-sink-media";
 export const TEXT_PROVIDER_ID = "kitchen-sink-llm";
 export const WEB_SEARCH_PROVIDER_ID = "kitchen-sink-search";
 export const WEB_FETCH_PROVIDER_ID = "kitchen-sink-fetch";
+export const SPEECH_PROVIDER_ID = "kitchen-sink-speech";
+export const REALTIME_TRANSCRIPTION_PROVIDER_ID = "kitchen-sink-realtime-transcription";
+export const REALTIME_VOICE_PROVIDER_ID = "kitchen-sink-realtime-voice";
+export const VIDEO_PROVIDER_ID = "kitchen-sink-video";
+export const MUSIC_PROVIDER_ID = "kitchen-sink-music";
+export const MEMORY_EMBEDDING_PROVIDER_ID = "kitchen-sink-memory-embedding";
+export const COMPACTION_PROVIDER_ID = "kitchen-sink-compaction";
 export const CHANNEL_ID = "kitchen-sink-channel";
 export const CHANNEL_ACCOUNT_ID = "local";
 export const DEFAULT_IMAGE_MODEL = "kitchen-sink-image-v1";
 export const DEFAULT_MEDIA_MODEL = "kitchen-sink-vision-v1";
 export const DEFAULT_TEXT_MODEL = "kitchen-sink-text-v1";
+export const DEFAULT_SPEECH_MODEL = "kitchen-sink-tts-v1";
+export const DEFAULT_VIDEO_MODEL = "kitchen-sink-video-v1";
+export const DEFAULT_MUSIC_MODEL = "kitchen-sink-music-v1";
+export const DEFAULT_EMBEDDING_MODEL = "kitchen-sink-embed-v1";
 export const DEFAULT_IMAGE_DELAY_MS = 10_000;
 const KITCHEN_SINK_OFFICE_IMAGE_FILE = "kitchen_sink_office.png";
 const KITCHEN_SINK_OFFICE_IMAGE = readFileSync(
@@ -411,6 +422,142 @@ export async function runKitchenFetch(url) {
   };
 }
 
+export function createKitchenSpeechAsset({ text, voice = "kitchen-neutral", model = DEFAULT_SPEECH_MODEL } = {}) {
+  const normalized = normalizePrompt(text, "Kitchen Sink speech fixture.");
+  const audioBuffer = createKitchenWavBuffer(normalized);
+  return {
+    audioBuffer,
+    buffer: audioBuffer,
+    mimeType: "audio/wav",
+    outputFormat: "wav",
+    fileExtension: ".wav",
+    voice,
+    voiceCompatible: true,
+    model,
+    durationMs: 480,
+    sampleRateHz: 16_000,
+    text: normalized,
+    metadata: fixtureMetadata("speech.synthesize", SPEECH_PROVIDER_ID, {
+      model,
+      voice,
+      sizeBytes: audioBuffer.byteLength,
+      sha256: sha256Hex(audioBuffer),
+    }),
+  };
+}
+
+export function createKitchenTranscription({ audio, prompt } = {}) {
+  const byteLength = inferByteLength(audio);
+  return {
+    provider: REALTIME_TRANSCRIPTION_PROVIDER_ID,
+    scenarioId: "media.audio-transcribe",
+    text: `Kitchen Sink transcript for ${byteLength} bytes of audio. ${normalizePrompt(prompt, "No prompt supplied.")}`,
+    language: "en",
+    segments: [
+      { startMs: 0, endMs: 240, text: "Kitchen Sink transcript." },
+      { startMs: 240, endMs: 480, text: "Deterministic audio fixture complete." },
+    ],
+    confidence: 0.99,
+    metadata: fixtureMetadata("media.audio-transcribe", REALTIME_TRANSCRIPTION_PROVIDER_ID, { byteLength }),
+  };
+}
+
+export function createKitchenVideoResult({ prompt, model = DEFAULT_VIDEO_MODEL } = {}) {
+  const normalized = normalizePrompt(prompt, "kitchen sink video fixture");
+  const id = `ks_video_${stableHash(normalized).slice(0, 10)}`;
+  return {
+    provider: VIDEO_PROVIDER_ID,
+    model,
+    job: mediaJob("video", id, normalized, "video.generate"),
+    videos: [
+      {
+        id,
+        mimeType: "application/vnd.openclaw.kitchen-video+json",
+        fileName: `${id}.kitchen-video.json`,
+        durationMs: 3_000,
+        width: 1024,
+        height: 1024,
+        dataUrl: dataUrlForJson("application/vnd.openclaw.kitchen-video+json", {
+          id,
+          prompt: normalized,
+          frames: ["office-lobby-sink", "sink-closeup", "fixture-badge"],
+        }),
+        metadata: fixtureMetadata("video.generate", VIDEO_PROVIDER_ID, { model, prompt: normalized }),
+      },
+    ],
+    metadata: fixtureMetadata("video.generate", VIDEO_PROVIDER_ID, { model, jobId: id }),
+  };
+}
+
+export function createKitchenMusicResult({ prompt, model = DEFAULT_MUSIC_MODEL } = {}) {
+  const normalized = normalizePrompt(prompt, "kitchen sink music fixture");
+  const id = `ks_music_${stableHash(normalized).slice(0, 10)}`;
+  const audioBuffer = createKitchenWavBuffer(normalized);
+  return {
+    provider: MUSIC_PROVIDER_ID,
+    model,
+    job: mediaJob("music", id, normalized, "music.generate"),
+    tracks: [
+      {
+        id,
+        title: "Kitchen Sink Fixture Loop",
+        mimeType: "audio/wav",
+        fileName: `${id}.wav`,
+        durationMs: 480,
+        audioBuffer,
+        dataUrl: `data:audio/wav;base64,${audioBuffer.toString("base64")}`,
+        metadata: fixtureMetadata("music.generate", MUSIC_PROVIDER_ID, {
+          model,
+          sizeBytes: audioBuffer.byteLength,
+          sha256: sha256Hex(audioBuffer),
+        }),
+      },
+    ],
+    metadata: fixtureMetadata("music.generate", MUSIC_PROVIDER_ID, { model, jobId: id }),
+  };
+}
+
+export function createKitchenEmbedding(input, dimensions = 8) {
+  const text = Array.isArray(input) ? input.join("\n") : normalizePrompt(input, "kitchen sink memory");
+  const hash = createHash("sha256").update(text).digest();
+  return Array.from({ length: dimensions }, (_, index) => Number(((hash[index] / 255) * 2 - 1).toFixed(6)));
+}
+
+export function createKitchenMemorySearch(query) {
+  const normalized = normalizePrompt(query, "kitchen sink memory");
+  return {
+    provider: MEMORY_EMBEDDING_PROVIDER_ID,
+    scenarioId: "memory.search",
+    query: normalized,
+    results: [
+      {
+        id: "ks-memory-runtime-surfaces",
+        score: 0.97,
+        title: "Kitchen Sink runtime surfaces",
+        text: "Kitchen Sink exercises providers, tools, hooks, channels, memory, compaction, and task lifecycles.",
+        metadata: fixtureMetadata("memory.search", MEMORY_EMBEDDING_PROVIDER_ID),
+      },
+    ],
+  };
+}
+
+export function createKitchenCompaction(input = {}) {
+  const messages = Array.isArray(input.messages) ? input.messages : [];
+  const text = messages
+    .map((message) => (typeof message?.content === "string" ? message.content : ""))
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const summary = normalizePrompt(text, normalizePrompt(input.text, "Kitchen Sink compacted deterministic transcript."));
+  return {
+    provider: COMPACTION_PROVIDER_ID,
+    scenarioId: "compaction.summary",
+    summary: `Kitchen Sink compacted ${messages.length || 1} turn${messages.length === 1 ? "" : "s"}: ${summary.slice(0, 180)}`,
+    preservedIdentifiers: [...new Set(summary.match(/\bks_[a-z]+_[a-f0-9]+\b/g) || [])],
+    metadata: fixtureMetadata("compaction.summary", COMPACTION_PROVIDER_ID, { messageCount: messages.length }),
+  };
+}
+
 export function kitchenImageReply(result) {
   if (result.error) {
     return {
@@ -795,6 +942,81 @@ function classifyKitchenFailure(prompt) {
 
 function selectKitchenImageFixture(_prompt) {
   return KITCHEN_IMAGE_FIXTURES[0];
+}
+
+function mediaJob(kind, id, prompt, scenarioId) {
+  const createdAt = "2026-04-28T00:00:00.000Z";
+  return {
+    id,
+    kind,
+    status: "completed",
+    prompt,
+    createdAt,
+    completedAt: createdAt,
+    pluginId: PLUGIN_ID,
+    scenarioId,
+    progressPercent: 100,
+    timeline: [
+      { status: "queued", at: createdAt, summary: `Kitchen Sink ${kind} job queued.` },
+      { status: "running", at: createdAt, summary: `Kitchen Sink ${kind} job running.` },
+      { status: "completed", at: createdAt, summary: `Kitchen Sink ${kind} job completed.` },
+    ],
+  };
+}
+
+function fixtureMetadata(scenarioId, providerId, extra = {}) {
+  return {
+    kitchenSink: true,
+    pluginId: PLUGIN_ID,
+    providerId,
+    scenarioId,
+    ...extra,
+  };
+}
+
+function createKitchenWavBuffer(seedText) {
+  const sampleRate = 16_000;
+  const durationSeconds = 0.48;
+  const sampleCount = Math.floor(sampleRate * durationSeconds);
+  const dataSize = sampleCount * 2;
+  const buffer = Buffer.alloc(44 + dataSize);
+  const frequency = 360 + (Number.parseInt(stableHash(seedText).slice(0, 2), 16) % 160);
+  buffer.write("RIFF", 0);
+  buffer.writeUInt32LE(36 + dataSize, 4);
+  buffer.write("WAVE", 8);
+  buffer.write("fmt ", 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(1, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  buffer.writeUInt32LE(sampleRate * 2, 28);
+  buffer.writeUInt16LE(2, 32);
+  buffer.writeUInt16LE(16, 34);
+  buffer.write("data", 36);
+  buffer.writeUInt32LE(dataSize, 40);
+  for (let index = 0; index < sampleCount; index += 1) {
+    const envelope = Math.sin((Math.PI * index) / sampleCount);
+    const sample = Math.round(Math.sin((2 * Math.PI * frequency * index) / sampleRate) * 12000 * envelope);
+    buffer.writeInt16LE(sample, 44 + index * 2);
+  }
+  return buffer;
+}
+
+function dataUrlForJson(mimeType, value) {
+  return `data:${mimeType};base64,${Buffer.from(JSON.stringify(value), "utf8").toString("base64")}`;
+}
+
+function inferByteLength(value) {
+  if (!value) {
+    return 0;
+  }
+  if (typeof value.byteLength === "number") {
+    return value.byteLength;
+  }
+  if (typeof value.length === "number") {
+    return value.length;
+  }
+  return Buffer.byteLength(String(value));
 }
 
 function sha256Hex(buffer) {

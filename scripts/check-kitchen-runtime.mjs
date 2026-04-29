@@ -175,6 +175,57 @@ const mediaResult = await mediaProvider.describeImage({
   model: "kitchen-sink-vision-v1",
 });
 assert.match(mediaResult.text, /Kitchen Sink media fixture/);
+const audioDescription = await mediaProvider.transcribeAudio({
+  audio: Buffer.from("audio fixture"),
+  prompt: "transcribe this kitchen audio",
+});
+assert.match(audioDescription.text, /Kitchen Sink transcript/);
+assert.equal(audioDescription.segments.length, 2);
+const videoDescription = await mediaProvider.describeVideo({ prompt: "describe kitchen video" });
+assert.match(videoDescription.text, /three deterministic frames/);
+
+const speechProvider = findRegistration("registerSpeechProvider", "kitchen-sink-speech");
+const speechResult = await speechProvider.synthesize({ text: "say kitchen sink" });
+assert.equal(speechResult.mimeType, "audio/wav");
+assert.equal(speechResult.audioBuffer.subarray(0, 4).toString("ascii"), "RIFF");
+assert.equal(speechResult.metadata.providerId, "kitchen-sink-speech");
+
+const realtimeTranscriptionProvider = findRegistration(
+  "registerRealtimeTranscriptionProvider",
+  "kitchen-sink-realtime-transcription",
+);
+const realtimeTranscripts = [];
+const realtimeSession = realtimeTranscriptionProvider.createSession({
+  onTranscript: (text) => realtimeTranscripts.push(text),
+});
+await realtimeSession.connect();
+realtimeSession.sendAudio(Buffer.from("abc"));
+const realtimeFinal = await realtimeSession.close();
+assert.match(realtimeFinal.text, /Kitchen Sink transcript/);
+assert.ok(realtimeTranscripts.some((text) => /partial transcript/.test(text)));
+
+const realtimeVoiceProvider = findRegistration("registerRealtimeVoiceProvider", "kitchen-sink-realtime-voice");
+const realtimeVoiceEvents = [];
+const realtimeBridge = realtimeVoiceProvider.createBridge({
+  onEvent: (event) => realtimeVoiceEvents.push(event.type),
+});
+await realtimeBridge.connect();
+assert.equal(realtimeBridge.isConnected(), true);
+realtimeBridge.setMediaTimestamp(123);
+realtimeBridge.submitToolResult({ ok: true });
+realtimeBridge.close();
+assert.equal(realtimeBridge.isConnected(), false);
+assert.deepEqual(realtimeVoiceEvents, ["connected", "media_timestamp", "tool_result", "closed"]);
+
+const videoProvider = findRegistration("registerVideoGenerationProvider", "kitchen-sink-video");
+const videoResult = await videoProvider.generateVideo({ prompt: "kitchen video" });
+assert.equal(videoResult.videos[0].mimeType, "application/vnd.openclaw.kitchen-video+json");
+assert.equal(videoResult.job.status, "completed");
+
+const musicProvider = findRegistration("registerMusicGenerationProvider", "kitchen-sink-music");
+const musicResult = await musicProvider.generateMusic({ prompt: "kitchen song" });
+assert.equal(musicResult.tracks[0].mimeType, "audio/wav");
+assert.equal(musicResult.tracks[0].audioBuffer.subarray(0, 4).toString("ascii"), "RIFF");
 
 const searchProvider = findRegistration("registerWebSearchProvider", "kitchen-sink-search");
 const searchTool = searchProvider.createTool({});
@@ -207,6 +258,58 @@ const streamMessage = await stream.result();
 assert.deepEqual(streamEvents, ["start", "text_start", "text_delta", "text_end", "done"]);
 assert.match(streamMessage.content[0].text, /kitchen explain text inference/);
 assert.ok(streamMessage.usage.totalTokens > 0);
+
+const embeddingProvider = findRegistration("registerMemoryEmbeddingProvider", "kitchen-sink-memory-embedding");
+const embeddingResult = await embeddingProvider.embed({ text: "kitchen memory" });
+assert.equal(embeddingResult.embedding.length, 8);
+assert.equal(embeddingResult.model, "kitchen-sink-embed-v1");
+const embeddingBatch = await embeddingProvider.embedMany({ texts: ["one", "two"] });
+assert.equal(embeddingBatch.embeddings.length, 2);
+
+const memoryCorpus = findRegistration("registerMemoryCorpusSupplement", "kitchen-sink-memory-corpus");
+const memorySearch = await memoryCorpus.search({ query: "runtime surfaces" });
+assert.equal(memorySearch.results[0].id, "ks-memory-runtime-surfaces");
+const memoryRead = await memoryCorpus.read("ks-memory-runtime-surfaces");
+assert.match(memoryRead.text, /providers, channels, hooks/);
+
+const compactionProvider = findRegistration("registerCompactionProvider", "kitchen-sink-compaction");
+const compacted = await compactionProvider.compact({
+  messages: [{ role: "user", content: "remember job ks_image_1f8a5a98 and the image fixture" }],
+});
+assert.match(compacted.summary, /Kitchen Sink compacted/);
+assert.deepEqual(compacted.preservedIdentifiers, ["ks_image_1f8a5a98"]);
+
+const middleware = registrations.registerAgentToolResultMiddleware.at(-1);
+assert.equal(typeof middleware?.[0], "function");
+assert.deepEqual(middleware[1].runtimes, ["pi", "codex", "cli"]);
+const middlewareResult = await middleware[0]({ result: { content: "tool output" } });
+assert.equal(middlewareResult.metadata.kitchenSinkToolResultMiddleware, true);
+
+const service = registrations.registerService.map(([value]) => value).at(-1);
+assert.equal(service.id, "kitchen-sink-service");
+assert.equal((await service.probe()).state, "ready");
+assert.equal((await service.start()).state, "started");
+
+const httpRoute = findRegistration("registerHttpRoute", "kitchen-sink-http-status");
+let httpBody = "";
+const httpResult = await httpRoute.handler({}, {
+  setHeader: () => {},
+  end: (body) => {
+    httpBody = body;
+  },
+});
+assert.equal(httpRoute.path, "/kitchen-sink/status");
+assert.equal(httpResult.ok, true);
+assert.match(httpBody, /openclaw-kitchen-sink-fixture/);
+
+const gatewayMethod = registrations.registerGatewayMethod.find(([name]) => name === "kitchen.status");
+assert.ok(gatewayMethod, "registers kitchen.status gateway method");
+const gatewayResult = await gatewayMethod[1]({});
+assert.ok(gatewayResult.providerIds.includes("kitchen-sink-video"));
+
+const cliRegistration = registrations.registerCli.at(-1);
+assert.equal(typeof cliRegistration?.[0], "function");
+assert.equal(cliRegistration[1].descriptors[0].name, "kitchen-sink");
 
 const imageTool = findRegistration("registerTool", "kitchen_sink_image_job");
 assert.equal(typeof imageTool.execute, "function");

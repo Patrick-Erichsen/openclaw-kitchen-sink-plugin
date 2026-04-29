@@ -15,7 +15,11 @@
   ],
   "providers": [
     "kitchen-sink-provider",
-    "kitchen-sink-llm"
+    "kitchen-sink-llm",
+    "kitchen-sink-image",
+    "kitchen-sink-speech",
+    "kitchen-sink-video",
+    "kitchen-sink-music"
   ],
   "cliBackends": [
     "kitchen-sink-cli-backend"
@@ -34,7 +38,10 @@
     "onProviders": [
       "kitchen-sink-provider",
       "kitchen-sink-llm",
-      "kitchen-sink-image"
+      "kitchen-sink-image",
+      "kitchen-sink-speech",
+      "kitchen-sink-video",
+      "kitchen-sink-music"
     ],
     "onChannels": [
       "kitchen-sink-channel"
@@ -72,6 +79,41 @@
           "none"
         ],
         "envVars": []
+      },
+      {
+        "id": "kitchen-sink-speech",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
+      },
+      {
+        "id": "kitchen-sink-realtime-transcription",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
+      },
+      {
+        "id": "kitchen-sink-realtime-voice",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
+      },
+      {
+        "id": "kitchen-sink-video",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
+      },
+      {
+        "id": "kitchen-sink-music",
+        "authMethods": [
+          "none"
+        ],
+        "envVars": []
       }
     ],
     "cliBackends": [
@@ -104,22 +146,27 @@
       "kitchen-sink-media"
     ],
     "memoryEmbeddingProviders": [
-      "kitchen-sink-memory-embedding-providers"
+      "kitchen-sink-memory-embedding-providers",
+      "kitchen-sink-memory-embedding"
     ],
     "migrationProviders": [
       "kitchen-sink-migration-providers"
     ],
     "musicGenerationProviders": [
-      "kitchen-sink-music-generation-providers"
+      "kitchen-sink-music-generation-providers",
+      "kitchen-sink-music"
     ],
     "realtimeTranscriptionProviders": [
-      "kitchen-sink-realtime-transcription-providers"
+      "kitchen-sink-realtime-transcription-providers",
+      "kitchen-sink-realtime-transcription"
     ],
     "realtimeVoiceProviders": [
-      "kitchen-sink-realtime-voice-providers"
+      "kitchen-sink-realtime-voice-providers",
+      "kitchen-sink-realtime-voice"
     ],
     "speechProviders": [
-      "kitchen-sink-speech-providers"
+      "kitchen-sink-speech-providers",
+      "kitchen-sink-speech"
     ],
     "tools": [
       "kitchen-sink-tools",
@@ -128,7 +175,8 @@
       "kitchen_sink_search"
     ],
     "videoGenerationProviders": [
-      "kitchen-sink-video-generation-providers"
+      "kitchen-sink-video-generation-providers",
+      "kitchen-sink-video"
     ],
     "webContentExtractors": [
       "kitchen-sink-web-content-extractors"

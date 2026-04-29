@@ -11,8 +11,9 @@ This repo is both:
 
 The generated runtime probes are credential-free. The hand-owned Kitchen Sink
 runtime also registers deterministic direct commands, tools, image generation,
-media understanding, web search, web fetch, channel, hook, detached-task, and
-text-provider catalog surfaces.
+speech, realtime transcription/voice, video, music, media understanding, web
+search, web fetch, memory, compaction, gateway/service/CLI, channel, hook,
+detached-task, and text-provider catalog surfaces.
 It should not call external services, read secrets, spawn processes, or require
 live credentials.
 
@@ -42,12 +43,22 @@ It also exposes provider and tool surfaces for live model routing:
   `rate limit`, `timeout`, or `fail` exercise deterministic provider error
   paths.
 - `kitchen-sink-media` describes images with deterministic fixture text.
+- `kitchen-sink-speech`, `kitchen-sink-realtime-transcription`,
+  `kitchen-sink-realtime-voice`, `kitchen-sink-video`, and
+  `kitchen-sink-music` expose credential-free media provider fixtures with
+  deterministic WAV, transcript, bridge, storyboard, and track payloads.
 - `kitchen-sink-search` and `kitchen-sink-fetch` provide credential-free web
   tool fixtures with realistic status codes, request ids, result metadata,
   redirects, headers, cache metadata, links, and markdown content.
+- `kitchen-sink-memory-embedding`, `kitchen-sink-memory-corpus`, and
+  `kitchen-sink-compaction` provide deterministic memory vectors, corpus
+  results, reads, and transcript summaries.
 - `kitchen-sink-channel` is a credential-free channel fixture that can resolve
   local ready/disabled/misconfigured accounts, route outbound sessions, and
   deliver deterministic text/media records.
+- `kitchen.status`, `/kitchen-sink/status`, `kitchen-sink-service`, and the
+  lazy CLI descriptor exercise gateway method, HTTP route, service, and CLI
+  registration surfaces.
 - `kitchen-sink-llm` exposes a deterministic text-provider catalog row,
   provider-owned stream function, and prompt guidance so live LLM providers can
   discover the Kitchen Sink routes; responses describe which real plugin

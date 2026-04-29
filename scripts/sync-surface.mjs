@@ -156,6 +156,13 @@ function renderManifest({ manifestContracts, packageVersion }) {
   const contracts = Object.fromEntries(manifestContracts.map((field) => [field, [`kitchen-sink-${kebab(field)}`]]));
   appendContract(contracts, "imageGenerationProviders", "kitchen-sink-image");
   appendContract(contracts, "mediaUnderstandingProviders", "kitchen-sink-media");
+  appendContract(contracts, "speechProviders", "kitchen-sink-speech");
+  appendContract(contracts, "realtimeTranscriptionProviders", "kitchen-sink-realtime-transcription");
+  appendContract(contracts, "realtimeVoiceProviders", "kitchen-sink-realtime-voice");
+  appendContract(contracts, "videoGenerationProviders", "kitchen-sink-video");
+  appendContract(contracts, "musicGenerationProviders", "kitchen-sink-music");
+  appendContract(contracts, "memoryEmbeddingProviders", "kitchen-sink-memory-embedding");
+  appendContract(contracts, "agentToolResultMiddleware", "kitchen-sink-agent-tool-result-middleware");
   appendContract(contracts, "webSearchProviders", "kitchen-sink-search");
   appendContract(contracts, "webFetchProviders", "kitchen-sink-fetch");
   appendContract(contracts, "tools", "kitchen_sink_image_job");
@@ -169,14 +176,28 @@ function renderManifest({ manifestContracts, packageVersion }) {
     enabledByDefault: false,
     kind: ["tool", "hook", "channel", "provider"],
     channels: ["kitchen-sink-channel"],
-    providers: ["kitchen-sink-provider", "kitchen-sink-llm"],
+    providers: [
+      "kitchen-sink-provider",
+      "kitchen-sink-llm",
+      "kitchen-sink-image",
+      "kitchen-sink-speech",
+      "kitchen-sink-video",
+      "kitchen-sink-music",
+    ],
     cliBackends: ["kitchen-sink-cli-backend"],
     commandAliases: [
       { command: "kitchen", pluginId: "openclaw-kitchen-sink-fixture" },
       { command: "kitchen-sink", pluginId: "openclaw-kitchen-sink-fixture" },
     ],
     activation: {
-      onProviders: ["kitchen-sink-provider", "kitchen-sink-llm", "kitchen-sink-image"],
+      onProviders: [
+        "kitchen-sink-provider",
+        "kitchen-sink-llm",
+        "kitchen-sink-image",
+        "kitchen-sink-speech",
+        "kitchen-sink-video",
+        "kitchen-sink-music",
+      ],
       onChannels: ["kitchen-sink-channel"],
       onCommands: ["kitchen", "kitchen-sink"],
       onCapabilities: ["provider", "channel", "tool", "hook"],
@@ -186,6 +207,11 @@ function renderManifest({ manifestContracts, packageVersion }) {
         { id: "kitchen-sink-provider", authMethods: ["none"], envVars: [] },
         { id: "kitchen-sink-llm", authMethods: ["none"], envVars: [] },
         { id: "kitchen-sink-image", authMethods: ["none"], envVars: [] },
+        { id: "kitchen-sink-speech", authMethods: ["none"], envVars: [] },
+        { id: "kitchen-sink-realtime-transcription", authMethods: ["none"], envVars: [] },
+        { id: "kitchen-sink-realtime-voice", authMethods: ["none"], envVars: [] },
+        { id: "kitchen-sink-video", authMethods: ["none"], envVars: [] },
+        { id: "kitchen-sink-music", authMethods: ["none"], envVars: [] },
       ],
       cliBackends: ["kitchen-sink-cli-backend"],
       configMigrations: ["kitchen-sink-config-migration"],

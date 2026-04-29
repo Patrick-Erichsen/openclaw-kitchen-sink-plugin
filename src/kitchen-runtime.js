@@ -4,16 +4,31 @@ import {
   DEFAULT_TEXT_MODEL,
   CHANNEL_ACCOUNT_ID,
   CHANNEL_ID,
+  COMPACTION_PROVIDER_ID,
+  DEFAULT_EMBEDDING_MODEL,
   IMAGE_PROVIDER_ID,
   MEDIA_PROVIDER_ID,
+  MEMORY_EMBEDDING_PROVIDER_ID,
+  MUSIC_PROVIDER_ID,
   PLUGIN_ID,
+  REALTIME_TRANSCRIPTION_PROVIDER_ID,
+  REALTIME_VOICE_PROVIDER_ID,
+  SPEECH_PROVIDER_ID,
   TEXT_PROVIDER_ID,
+  VIDEO_PROVIDER_ID,
   WEB_FETCH_PROVIDER_ID,
   WEB_SEARCH_PROVIDER_ID,
+  createKitchenCompaction,
+  createKitchenEmbedding,
+  createKitchenMemorySearch,
   createKitchenChannelDelivery,
+  createKitchenMusicResult,
   createKitchenScenarioRuntime,
   createKitchenSinkImageAsset,
+  createKitchenSpeechAsset,
   createKitchenTextStream,
+  createKitchenTranscription,
+  createKitchenVideoResult,
   extractInteractiveText,
   kitchenChannelAccount,
   kitchenImageDescription,
@@ -55,6 +70,19 @@ export function registerKitchenSinkRuntime(api, options = {}) {
   optionalRegister(api, "registerMediaUnderstandingProvider", () =>
     api.registerMediaUnderstandingProvider(buildKitchenMediaProvider()),
   );
+  optionalRegister(api, "registerSpeechProvider", () => api.registerSpeechProvider(buildKitchenSpeechProvider()));
+  optionalRegister(api, "registerRealtimeTranscriptionProvider", () =>
+    api.registerRealtimeTranscriptionProvider(buildKitchenRealtimeTranscriptionProvider()),
+  );
+  optionalRegister(api, "registerRealtimeVoiceProvider", () =>
+    api.registerRealtimeVoiceProvider(buildKitchenRealtimeVoiceProvider()),
+  );
+  optionalRegister(api, "registerVideoGenerationProvider", () =>
+    api.registerVideoGenerationProvider(buildKitchenVideoProvider()),
+  );
+  optionalRegister(api, "registerMusicGenerationProvider", () =>
+    api.registerMusicGenerationProvider(buildKitchenMusicProvider()),
+  );
   optionalRegister(api, "registerWebSearchProvider", () =>
     api.registerWebSearchProvider(buildKitchenWebSearchProvider()),
   );
@@ -64,6 +92,26 @@ export function registerKitchenSinkRuntime(api, options = {}) {
   optionalRegister(api, "registerDetachedTaskRuntime", () =>
     api.registerDetachedTaskRuntime(buildKitchenDetachedTaskRuntime()),
   );
+  optionalRegister(api, "registerMemoryEmbeddingProvider", () =>
+    api.registerMemoryEmbeddingProvider(buildKitchenMemoryEmbeddingProvider()),
+  );
+  optionalRegister(api, "registerMemoryCorpusSupplement", () =>
+    api.registerMemoryCorpusSupplement(buildKitchenMemoryCorpusSupplement()),
+  );
+  optionalRegister(api, "registerCompactionProvider", () =>
+    api.registerCompactionProvider(buildKitchenCompactionProvider()),
+  );
+  optionalRegister(api, "registerAgentToolResultMiddleware", () =>
+    api.registerAgentToolResultMiddleware(buildKitchenToolResultMiddleware(), {
+      runtimes: ["pi", "codex", "cli"],
+    }),
+  );
+  optionalRegister(api, "registerService", () => api.registerService(buildKitchenService()));
+  optionalRegister(api, "registerHttpRoute", () => api.registerHttpRoute(buildKitchenHttpRoute()));
+  optionalRegister(api, "registerGatewayMethod", () =>
+    api.registerGatewayMethod("kitchen.status", buildKitchenGatewayMethod()),
+  );
+  optionalRegister(api, "registerCli", () => api.registerCli(buildKitchenCliRegistrar(), buildKitchenCliMetadata()));
   optionalRegister(api, "registerMemoryPromptSupplement", () =>
     api.registerMemoryPromptSupplement(async () => kitchenPromptGuidance().join("\n")),
   );
@@ -296,7 +344,7 @@ function buildKitchenImageProvider(runtime) {
 function buildKitchenMediaProvider() {
   return {
     id: MEDIA_PROVIDER_ID,
-    capabilities: ["image"],
+    capabilities: ["image", "audio", "video"],
     defaultModels: { image: DEFAULT_MEDIA_MODEL },
     autoPriority: { image: 5 },
     describeImage: async (req) => ({
@@ -307,6 +355,127 @@ function buildKitchenMediaProvider() {
       text: kitchenImageDescription(req?.prompt, Array.isArray(req?.images) ? req.images.length : 0),
       model: req?.model || DEFAULT_MEDIA_MODEL,
     }),
+    transcribeAudio: async (req) => createKitchenTranscription({ audio: req?.audio, prompt: req?.prompt }),
+    describeVideo: async (req) => ({
+      text: "Kitchen Sink video fixture: three deterministic frames show the office sink asset, a close-up, and a fixture badge.",
+      model: req?.model || DEFAULT_MEDIA_MODEL,
+      metadata: { kitchenSink: true, provider: MEDIA_PROVIDER_ID, scenarioId: "media.video-describe" },
+    }),
+  };
+}
+
+function buildKitchenSpeechProvider() {
+  return {
+    id: SPEECH_PROVIDER_ID,
+    label: "Kitchen Sink Speech",
+    voices: ["kitchen-neutral", "kitchen-robot"],
+    defaultVoice: "kitchen-neutral",
+    isConfigured: () => true,
+    synthesize: async (req) => createKitchenSpeechAsset({
+      text: req?.text,
+      voice: req?.voice,
+      model: req?.model,
+    }),
+    speak: async (req) => createKitchenSpeechAsset({
+      text: req?.text,
+      voice: req?.voice,
+      model: req?.model,
+    }),
+  };
+}
+
+function buildKitchenRealtimeTranscriptionProvider() {
+  return {
+    id: REALTIME_TRANSCRIPTION_PROVIDER_ID,
+    label: "Kitchen Sink Realtime Transcription",
+    isConfigured: () => true,
+    createSession: (req = {}) => {
+      const chunks = [];
+      return {
+        provider: REALTIME_TRANSCRIPTION_PROVIDER_ID,
+        async connect() {
+          req.onReady?.({ provider: REALTIME_TRANSCRIPTION_PROVIDER_ID });
+          return { ok: true, provider: REALTIME_TRANSCRIPTION_PROVIDER_ID };
+        },
+        sendAudio(audio) {
+          chunks.push(audio);
+          req.onTranscript?.(`Kitchen Sink partial transcript ${chunks.length}.`);
+        },
+        async close() {
+          const result = createKitchenTranscription({ audio: Buffer.concat(chunks.map(toBuffer)) });
+          req.onTranscript?.(result.text);
+          req.onClose?.({ code: 1000, reason: "kitchen sink complete" });
+          return result;
+        },
+      };
+    },
+  };
+}
+
+function buildKitchenRealtimeVoiceProvider() {
+  return {
+    id: REALTIME_VOICE_PROVIDER_ID,
+    label: "Kitchen Sink Realtime Voice",
+    isConfigured: () => true,
+    createBridge: (req = {}) => {
+      let connected = false;
+      const audio = [];
+      return {
+        supportsToolResultContinuation: true,
+        async connect() {
+          connected = true;
+          req.onEvent?.({ type: "connected", provider: REALTIME_VOICE_PROVIDER_ID });
+        },
+        sendAudio(chunk) {
+          audio.push(chunk);
+          req.onTranscript?.("Kitchen Sink realtime voice heard audio.");
+        },
+        setMediaTimestamp(timestampMs) {
+          req.onEvent?.({ type: "media_timestamp", timestampMs });
+        },
+        submitToolResult(result) {
+          req.onEvent?.({ type: "tool_result", result });
+        },
+        acknowledgeMark(mark) {
+          req.onEvent?.({ type: "mark", mark });
+        },
+        close() {
+          connected = false;
+          req.onEvent?.({ type: "closed", audioChunks: audio.length });
+        },
+        isConnected: () => connected,
+      };
+    },
+  };
+}
+
+function buildKitchenVideoProvider() {
+  return {
+    id: VIDEO_PROVIDER_ID,
+    label: "Kitchen Sink Video",
+    defaultModel: "kitchen-sink-video-v1",
+    capabilities: {
+      generate: { maxVideos: 1, maxDurationSeconds: 3, supportsResolution: true },
+      imageToVideo: { enabled: true, maxVideos: 1, maxInputImages: 1, maxDurationSeconds: 3 },
+      videoToVideo: { enabled: false },
+    },
+    isConfigured: () => true,
+    generateVideo: async (req) => createKitchenVideoResult({ prompt: req?.prompt, model: req?.model }),
+  };
+}
+
+function buildKitchenMusicProvider() {
+  return {
+    id: MUSIC_PROVIDER_ID,
+    label: "Kitchen Sink Music",
+    defaultModel: "kitchen-sink-music-v1",
+    capabilities: {
+      generate: { maxTracks: 1, maxDurationSeconds: 1 },
+      edit: { enabled: true, maxInputAudio: 1, maxTracks: 1 },
+    },
+    isConfigured: () => true,
+    generateMusic: async (req) => createKitchenMusicResult({ prompt: req?.prompt, model: req?.model }),
+    generate: async (req) => createKitchenMusicResult({ prompt: req?.prompt, model: req?.model }),
   };
 }
 
@@ -416,6 +585,133 @@ function buildKitchenWebFetchProvider() {
       },
       execute: async (args) => runKitchenFetch(readUrl(args)),
     }),
+  };
+}
+
+function buildKitchenMemoryEmbeddingProvider() {
+  return {
+    id: MEMORY_EMBEDDING_PROVIDER_ID,
+    label: "Kitchen Sink Memory Embeddings",
+    model: DEFAULT_EMBEDDING_MODEL,
+    dimensions: 8,
+    isConfigured: () => true,
+    embed: async (input) => ({
+      provider: MEMORY_EMBEDDING_PROVIDER_ID,
+      model: DEFAULT_EMBEDDING_MODEL,
+      embedding: createKitchenEmbedding(typeof input === "string" ? input : input?.text),
+    }),
+    embedMany: async (input) => {
+      const texts = Array.isArray(input) ? input : Array.isArray(input?.texts) ? input.texts : [input?.text ?? ""];
+      return {
+        provider: MEMORY_EMBEDDING_PROVIDER_ID,
+        model: DEFAULT_EMBEDDING_MODEL,
+        embeddings: texts.map((text) => createKitchenEmbedding(text)),
+      };
+    },
+  };
+}
+
+function buildKitchenMemoryCorpusSupplement() {
+  return {
+    id: "kitchen-sink-memory-corpus",
+    label: "Kitchen Sink Memory Corpus",
+    search: async (query) => createKitchenMemorySearch(typeof query === "string" ? query : query?.query),
+    read: async (id = "ks-memory-runtime-surfaces") => ({
+      id,
+      title: "Kitchen Sink runtime surfaces",
+      text: "Kitchen Sink memory corpus fixture covering providers, channels, hooks, compaction, and tasks.",
+      metadata: { kitchenSink: true, pluginId: PLUGIN_ID, scenarioId: "memory.read" },
+    }),
+    list: async () => ({
+      items: [{ id: "ks-memory-runtime-surfaces", title: "Kitchen Sink runtime surfaces" }],
+    }),
+  };
+}
+
+function buildKitchenCompactionProvider() {
+  return {
+    id: COMPACTION_PROVIDER_ID,
+    label: "Kitchen Sink Compaction",
+    compact: async (input) => createKitchenCompaction(input),
+    summarize: async (input) => createKitchenCompaction(input),
+  };
+}
+
+function buildKitchenToolResultMiddleware() {
+  return async (event = {}) => ({
+    ...event,
+    kitchenSink: true,
+    pluginId: PLUGIN_ID,
+    scenarioId: "tool-result.middleware",
+    result: event.result,
+    metadata: {
+      ...(event.metadata || {}),
+      kitchenSinkToolResultMiddleware: true,
+    },
+  });
+}
+
+function buildKitchenService() {
+  return {
+    id: "kitchen-sink-service",
+    name: "Kitchen Sink Service",
+    description: "Credential-free background service fixture.",
+    start: async () => ({ ok: true, service: "kitchen-sink-service", state: "started" }),
+    stop: async () => ({ ok: true, service: "kitchen-sink-service", state: "stopped" }),
+    probe: async () => ({ ok: true, service: "kitchen-sink-service", state: "ready" }),
+  };
+}
+
+function buildKitchenHttpRoute() {
+  return {
+    id: "kitchen-sink-http-status",
+    path: "/kitchen-sink/status",
+    auth: "gateway",
+    match: "exact",
+    handler: async (_req, res) => {
+      const body = JSON.stringify({ ok: true, pluginId: PLUGIN_ID, scenarioId: "http.status" });
+      if (res && typeof res === "object") {
+        res.statusCode = 200;
+        res.setHeader?.("content-type", "application/json");
+        res.end?.(body);
+      }
+      return { ok: true, body };
+    },
+  };
+}
+
+function buildKitchenGatewayMethod() {
+  return async () => ({
+    ok: true,
+    pluginId: PLUGIN_ID,
+    providerIds: [
+      SPEECH_PROVIDER_ID,
+      REALTIME_TRANSCRIPTION_PROVIDER_ID,
+      REALTIME_VOICE_PROVIDER_ID,
+      VIDEO_PROVIDER_ID,
+      MUSIC_PROVIDER_ID,
+      MEMORY_EMBEDDING_PROVIDER_ID,
+      COMPACTION_PROVIDER_ID,
+    ],
+  });
+}
+
+function buildKitchenCliRegistrar() {
+  return async ({ program } = {}) => {
+    program?.command?.("kitchen-sink")?.description?.("Run Kitchen Sink fixture commands.");
+    return { ok: true, command: "kitchen-sink" };
+  };
+}
+
+function buildKitchenCliMetadata() {
+  return {
+    descriptors: [
+      {
+        name: "kitchen-sink",
+        description: "Run Kitchen Sink fixture commands.",
+        hasSubcommands: true,
+      },
+    ],
   };
 }
 
@@ -572,6 +868,19 @@ function kitchenProviderError(result) {
     route: result.route,
   };
   return error;
+}
+
+function toBuffer(value) {
+  if (Buffer.isBuffer(value)) {
+    return value;
+  }
+  if (value instanceof Uint8Array) {
+    return Buffer.from(value);
+  }
+  if (typeof value === "string") {
+    return Buffer.from(value);
+  }
+  return Buffer.alloc(0);
 }
 
 function optionalRegister(api, method, register) {
