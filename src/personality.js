@@ -17,6 +17,7 @@ export const KITCHEN_SINK_EXPECTED_DIAGNOSTICS = {
   ],
   conformance: [],
   adversarial: [
+    "only bundled plugins can register agent tool result middleware",
     'agent harness "kitchen-sink-agent-harness" registration missing required runtime methods',
     'channel "kitchen-sink-channel-probe" registration missing required config helpers',
     "cli registration missing explicit commands metadata",
