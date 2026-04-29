@@ -14,6 +14,7 @@ Status: PASS
 
 | Method | Count | IDs |
 | ------ | ----- | --- |
+| registerAgentEventSubscription | 1 | kitchen-sink-agent-event-subscription |
 | registerAgentHarness | 1 | kitchen-sink-agent-harness |
 | registerAgentToolResultMiddleware | 2 | kitchen-sink-agent-tool-result-middleware, kitchen-sink-agent-tool-result-middleware |
 | registerAutoEnableProbe | 1 | kitchen-sink-auto-enable-probe |
@@ -25,6 +26,7 @@ Status: PASS
 | registerCompactionProvider | 2 | kitchen-sink-compaction, kitchen-sink-compaction-provider |
 | registerConfigMigration | 1 | kitchen-sink-config-migration |
 | registerContextEngine | 1 | kitchen-sink-context-engine |
+| registerControlUiDescriptor | 1 | kitchen-sink-control-ui-descriptor |
 | registerDetachedTaskRuntime | 1 | kitchen-sink-detached-task-runtime |
 | registerGatewayDiscoveryService | 1 | kitchen-sink-gateway-discovery-service |
 | registerGatewayMethod | 2 | kitchen-sink-gateway-method, kitchen.status |
@@ -47,11 +49,16 @@ Status: PASS
 | registerRealtimeTranscriptionProvider | 2 | kitchen-sink-realtime-transcription, kitchen-sink-realtime-transcription-provider |
 | registerRealtimeVoiceProvider | 2 | kitchen-sink-realtime-voice, kitchen-sink-realtime-voice-provider |
 | registerReload | 1 | kitchen-sink-reload |
+| registerRuntimeLifecycle | 1 | kitchen-sink-runtime-lifecycle |
 | registerSecurityAuditCollector | 1 | kitchen-sink-security-audit-collector |
 | registerService | 2 | kitchen-sink-service, kitchen-sink-service |
+| registerSessionExtension | 1 | kitchen-sink-session-extension |
+| registerSessionSchedulerJob | 1 | kitchen-sink-session-scheduler-job |
 | registerSpeechProvider | 2 | kitchen-sink-speech, kitchen-sink-speech-provider |
 | registerTextTransforms | 1 | kitchen-sink-text-transforms |
 | registerTool | 4 | kitchen-sink-tool, kitchen_sink_image_job, kitchen_sink_search, kitchen_sink_text |
+| registerToolMetadata | 1 | kitchen-sink-tool-metadata |
+| registerTrustedToolPolicy | 1 | kitchen-sink-trusted-tool-policy |
 | registerVideoGenerationProvider | 2 | kitchen-sink-video, kitchen-sink-video-generation-provider |
 | registerWebFetchProvider | 2 | kitchen-sink-fetch, kitchen-sink-web-fetch-provider |
 | registerWebSearchProvider | 2 | kitchen-sink-search, kitchen-sink-web-search-provider |

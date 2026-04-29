@@ -70,6 +70,9 @@
   "devDependencies": {
     "@openclaw/plugin-inspector": "0.3.5"
   },
+  "overrides": {
+    "@anthropic-ai/sdk": "0.91.1"
+  },
   "engines": {
     "node": ">=22"
   }

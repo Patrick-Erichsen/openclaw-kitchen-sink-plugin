@@ -225,6 +225,12 @@
     }
   },
   "runtimeRegistrations": {
+    "registerAgentEventSubscription": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-agent-event-subscription"
+      ]
+    },
     "registerAgentHarness": {
       "count": 1,
       "ids": [
@@ -295,6 +301,12 @@
       "count": 1,
       "ids": [
         "kitchen-sink-context-engine"
+      ]
+    },
+    "registerControlUiDescriptor": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-control-ui-descriptor"
       ]
     },
     "registerDetachedTaskRuntime": {
@@ -441,6 +453,12 @@
         "kitchen-sink-reload"
       ]
     },
+    "registerRuntimeLifecycle": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-runtime-lifecycle"
+      ]
+    },
     "registerSecurityAuditCollector": {
       "count": 1,
       "ids": [
@@ -452,6 +470,18 @@
       "ids": [
         "kitchen-sink-service",
         "kitchen-sink-service"
+      ]
+    },
+    "registerSessionExtension": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-session-extension"
+      ]
+    },
+    "registerSessionSchedulerJob": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-session-scheduler-job"
       ]
     },
     "registerSpeechProvider": {
@@ -474,6 +504,18 @@
         "kitchen_sink_image_job",
         "kitchen_sink_search",
         "kitchen_sink_text"
+      ]
+    },
+    "registerToolMetadata": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-tool-metadata"
+      ]
+    },
+    "registerTrustedToolPolicy": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-trusted-tool-policy"
       ]
     },
     "registerVideoGenerationProvider": {
