@@ -94,6 +94,12 @@ if (packageJson.dependencies?.openclaw !== buildOpenClawVersion) {
 if (!packageJson.files?.includes("src/")) {
   issues.push("package files must include src/");
 }
+if (packageJson.exports?.["./runtime"] !== "./src/kitchen-runtime.js") {
+  issues.push('package exports "./runtime" must point at "./src/kitchen-runtime.js"');
+}
+if (packageJson.exports?.["./scenarios"] !== "./src/scenarios.js") {
+  issues.push('package exports "./scenarios" must point at "./src/scenarios.js"');
+}
 
 if (issues.length > 0) {
   console.error(`Package payload check failed:\n- ${issues.join("\n- ")}`);
