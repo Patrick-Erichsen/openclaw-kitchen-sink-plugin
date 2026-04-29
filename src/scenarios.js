@@ -356,7 +356,7 @@ export function createKitchenChannelDelivery({ kind = "text", text = "", to = "k
     messageId: id,
     conversationId: normalizedTo,
     channelId: normalizedTo,
-    timestamp: Date.now(),
+    timestamp: Date.UTC(2026, 3, 28, 0, 0, 0),
     deliveryStatus: "sent",
     transport: "kitchen-sink-local",
     meta: {
