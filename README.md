@@ -27,6 +27,27 @@ The plugin exposes three test personalities through
 - `adversarial` loads only generated invalid probes so OpenClaw can assert
   expected diagnostics without mixing them with a live runtime smoke.
 
+## Source Layout
+
+The hand-owned runtime is intentionally split by plugin surface so it can be
+used as reference code instead of one giant fixture file:
+
+- `src/index.js` selects the Kitchen Sink personality and registers the runtime
+  plus generated probes.
+- `src/kitchen-runtime.js` is the runtime registrar entrypoint. It wires
+  builders together but keeps the implementation in smaller modules.
+- `src/runtime/commands.js`, `channel.js`, `providers.js`, `tasks.js`, and
+  `platform.js` hold the command/tool, channel, provider, detached-task, and
+  service/gateway/CLI registrations.
+- `src/scenarios.js` is the deterministic scenario router shared by dry
+  commands, tools, providers, hooks, channel delivery, and tests.
+- `src/fixtures/` holds deterministic mock payloads such as the bundled image
+  asset and text-provider stream fixture.
+- `src/generated-*` files are diagnostic surface probes generated from the
+  installed OpenClaw SDK. They are not the code plugin authors should copy.
+- `scripts/lib/` holds test harness code reused by runtime and contract probes;
+  `scripts/fixtures/` holds reviewable consumer-smoke programs.
+
 ## Kitchen Runtime
 
 The fixture can be used dry, without an LLM:
@@ -56,8 +77,8 @@ It also exposes provider and tool surfaces for live model routing:
   and the contract probe script also checks the approval path and conversation
   privacy observations for `llm_input`, `llm_output`, and `agent_end`.
 
-- `src/scenarios.js` is the shared deterministic fixture engine used by dry
-  commands, tools, providers, hooks, channel delivery, and tests.
+- `src/scenarios.js` routes deterministic user scenarios; reusable mock payloads
+  live in `src/fixtures/`.
 - `kitchen_sink_image_job` returns a deterministic image job, waits 10 seconds
   in real runtime execution, then returns the bundled `kitchen_sink_office.png`
   image payload with PNG dimensions, byte size, SHA-256 hash, seed, model, and
@@ -110,7 +131,9 @@ contract coverage.
 ```sh
 npm install
 npm run sync:surface
-npm test
+npm run check:runtime
+npm run check:inspector
+npm run check:install
 npm run pack:check
 ```
 
