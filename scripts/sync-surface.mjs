@@ -251,6 +251,18 @@ function renderPackageJson({ packageVersion }) {
     openclawVersion: packageVersion,
     pluginSdkVersion: packageVersion,
   };
+  packageJson.openclaw.install = {
+    ...(packageJson.openclaw.install ?? {}),
+    clawhubSpec: "clawhub:@openclaw/kitchen-sink",
+    npmSpec: "@openclaw/kitchen-sink",
+    defaultChoice: "clawhub",
+    minHostVersion: packageVersion,
+  };
+  packageJson.openclaw.release = {
+    ...(packageJson.openclaw.release ?? {}),
+    publishToClawHub: true,
+    publishToNpm: true,
+  };
   if (packageJson.dependencies?.openclaw) {
     packageJson.dependencies.openclaw = packageVersion;
   }

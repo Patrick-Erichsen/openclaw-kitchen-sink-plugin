@@ -45,6 +45,7 @@ Status: PASS
 | registerMigrationProvider | 1 | kitchen-sink-migration-provider |
 | registerMusicGenerationProvider | 2 | kitchen-sink-music, kitchen-sink-music-generation-provider |
 | registerNodeHostCommand | 1 | kitchen-sink-node-host-command |
+| registerNodeInvokePolicy | 1 | kitchen-sink-node-invoke-policy |
 | registerProvider | 2 | kitchen-sink-llm, kitchen-sink-provider |
 | registerRealtimeTranscriptionProvider | 2 | kitchen-sink-realtime-transcription, kitchen-sink-realtime-transcription-provider |
 | registerRealtimeVoiceProvider | 2 | kitchen-sink-realtime-voice, kitchen-sink-realtime-voice-provider |

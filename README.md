@@ -135,6 +135,7 @@ npm run check:runtime
 npm run check:inspector
 npm run check:install
 npm run pack:check
+npm run pack:zip
 ```
 
 The `Update OpenClaw SDK Surface` workflow automatically checks
@@ -153,6 +154,11 @@ generated updater instead of package-only bump PRs.
 Tagged GitHub releases publish the validated package to npm through trusted
 publishing. The release tag must match `package.json`, for example `v0.0.1` for
 version `0.0.1`.
+
+`npm pack` remains the canonical npm artifact. `npm run pack:zip` builds the
+legacy archive artifact at `dist/openclaw-kitchen-sink-fixture-<version>.zip`
+with `package.json`, `openclaw.plugin.json`, `plugin-inspector.config.json`,
+`README.md`, and `src/**` at the archive root for old archive installers.
 
 Use the `Draft Release` workflow to create the tag and generated GitHub release
 notes. Publishing that draft release runs the npm publish workflow. `0.0.x`

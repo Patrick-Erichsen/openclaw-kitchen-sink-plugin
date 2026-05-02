@@ -46,6 +46,16 @@
     "compat": {
       "pluginApi": "2026.4"
     },
+    "install": {
+      "clawhubSpec": "clawhub:@openclaw/kitchen-sink",
+      "npmSpec": "@openclaw/kitchen-sink",
+      "defaultChoice": "clawhub",
+      "minHostVersion": "2026.4.29"
+    },
+    "release": {
+      "publishToClawHub": true,
+      "publishToNpm": true
+    },
     "build": {
       "openclawVersion": "2026.4.29",
       "pluginSdkVersion": "2026.4.29"
@@ -58,6 +68,7 @@
     "check:inspector": "npm run plugin:inspect && npm run plugin:inspect:runtime",
     "check:runtime": "node scripts/check-kitchen-runtime.mjs && node scripts/check-kitchen-contract-probes.mjs",
     "pack:check": "node scripts/check-pack-payload.mjs",
+    "pack:zip": "node scripts/pack-zip.mjs",
     "plugin:inspect": "plugin-inspector check --config plugin-inspector.config.json --no-openclaw",
     "plugin:inspect:runtime": "PLUGIN_INSPECTOR_EXECUTE_ISOLATED=1 plugin-inspector check --config plugin-inspector.config.json --no-openclaw --runtime --mock-sdk",
     "sdk:target-check": "node scripts/check-target-sdk-imports.mjs",

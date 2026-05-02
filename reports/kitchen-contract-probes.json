@@ -426,6 +426,12 @@
         "kitchen-sink-node-host-command"
       ]
     },
+    "registerNodeInvokePolicy": {
+      "count": 1,
+      "ids": [
+        "kitchen-sink-node-invoke-policy"
+      ]
+    },
     "registerProvider": {
       "count": 2,
       "ids": [
