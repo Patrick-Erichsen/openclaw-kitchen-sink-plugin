@@ -51,6 +51,7 @@ const requiredFiles = [
 const missingFiles = requiredFiles.filter((file) => !files.has(file));
 
 const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
+const pluginManifest = JSON.parse(fs.readFileSync("openclaw.plugin.json", "utf8"));
 const issues = [];
 
 function sameStringArray(actual, expected) {
@@ -109,8 +110,12 @@ if (packageJson.openclaw?.install?.npmSpec !== "@openclaw/kitchen-sink") {
 if (packageJson.openclaw?.install?.defaultChoice !== "clawhub") {
   issues.push('openclaw.install.defaultChoice must be "clawhub"');
 }
-if (packageJson.openclaw?.install?.minHostVersion !== buildOpenClawVersion) {
-  issues.push("openclaw.install.minHostVersion must match openclaw.build.openclawVersion");
+if (packageJson.openclaw?.install?.minHostVersion !== `>=${buildOpenClawVersion}`) {
+  issues.push("openclaw.install.minHostVersion must be a semver floor for openclaw.build.openclawVersion");
+}
+const kitchenSinkChannelConfig = pluginManifest.channelConfigs?.["kitchen-sink-channel"];
+if (!kitchenSinkChannelConfig?.schema || kitchenSinkChannelConfig.schema.type !== "object") {
+  issues.push("openclaw.plugin.json must declare channelConfigs.kitchen-sink-channel.schema");
 }
 if (packageJson.openclaw?.release?.publishToClawHub !== true) {
   issues.push("openclaw.release.publishToClawHub must be true");

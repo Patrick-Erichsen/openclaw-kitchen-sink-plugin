@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/kitchen-sink",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": false,
   "description": "Credential-free kitchen-sink OpenClaw plugin fixture covering the public plugin API surface.",
   "type": "module",
@@ -50,7 +50,7 @@
       "clawhubSpec": "clawhub:@openclaw/kitchen-sink",
       "npmSpec": "@openclaw/kitchen-sink",
       "defaultChoice": "clawhub",
-      "minHostVersion": "2026.5.2"
+      "minHostVersion": ">=2026.5.2"
     },
     "release": {
       "publishToClawHub": true,
