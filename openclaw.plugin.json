@@ -1,7 +1,7 @@
 {
   "id": "openclaw-kitchen-sink-fixture",
   "name": "OpenClaw Kitchen Sink",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Generated kitchen-sink fixture for OpenClaw plugin API surface 2026.5.2.",
   "enabledByDefault": false,
   "kind": [
@@ -56,6 +56,42 @@
       "tool",
       "hook"
     ]
+  },
+  "channelConfigs": {
+    "kitchen-sink-channel": {
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "default": true
+          },
+          "disabled": {
+            "type": "boolean",
+            "default": false
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          },
+          "token": {
+            "type": "string"
+          }
+        }
+      },
+      "uiHints": {
+        "token": {
+          "sensitive": true
+        }
+      },
+      "label": "Kitchen Sink",
+      "description": "Credential-free channel fixture for deterministic Kitchen Sink conversations.",
+      "commands": {
+        "nativeCommandsAutoEnabled": true,
+        "nativeSkillsAutoEnabled": true
+      }
+    }
   },
   "setup": {
     "providers": [

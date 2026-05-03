@@ -215,6 +215,29 @@ function renderManifest({ manifestContracts, packageVersion }) {
       onCommands: ["kitchen", "kitchen-sink"],
       onCapabilities: ["provider", "channel", "tool", "hook"],
     },
+    channelConfigs: {
+      "kitchen-sink-channel": {
+        schema: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            configured: { type: "boolean", default: true },
+            disabled: { type: "boolean", default: false },
+            enabled: { type: "boolean", default: true },
+            token: { type: "string" },
+          },
+        },
+        uiHints: {
+          token: { sensitive: true },
+        },
+        label: "Kitchen Sink",
+        description: "Credential-free channel fixture for deterministic Kitchen Sink conversations.",
+        commands: {
+          nativeCommandsAutoEnabled: true,
+          nativeSkillsAutoEnabled: true,
+        },
+      },
+    },
     setup: {
       providers: [
         { id: "kitchen-sink-provider", authMethods: ["none"], envVars: [] },
@@ -256,7 +279,7 @@ function renderPackageJson({ packageVersion }) {
     clawhubSpec: "clawhub:@openclaw/kitchen-sink",
     npmSpec: "@openclaw/kitchen-sink",
     defaultChoice: "clawhub",
-    minHostVersion: packageVersion,
+    minHostVersion: `>=${packageVersion}`,
   };
   packageJson.openclaw.release = {
     ...(packageJson.openclaw.release ?? {}),
